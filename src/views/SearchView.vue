@@ -114,7 +114,7 @@ const loadMoreItems = () => {
       </form>
       <hr class="w-full h-px bg-neutral-200 border-0 dark:bg-neutral-700">
       <div v-if="isFormValid && isSubmitted">
-        <DomainItem :domain v-for="domain, index in domains" :key="index"></DomainItem>
+        <DomainItem :domainName="domain" v-for="domain, index in domains" :key="index"></DomainItem>
       </div>
     </div>
   </DefaultLayout>
