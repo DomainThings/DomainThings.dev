@@ -25,7 +25,7 @@ const fetchBookmarks = async () => {
 
     <div class="w-full">
       <template v-for="domain, index in bookmarks?.map(bookmark => bookmark.name)" :key="index">
-        <DomainItem :domain></DomainItem>
+        <DomainItem :domainName="domain"></DomainItem>
         <hr class="w-full h-px bg-gray-200 border-0 dark:bg-gray-700">
       </template>
     </div>
