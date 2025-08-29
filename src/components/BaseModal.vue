@@ -1,5 +1,5 @@
 <template>
-  <div v-if="modelValue" class="fixed inset-0 flex items-center justify-center bg-neutral-950 bg-opacity-90 z-20 p-4"
+  <div v-if="modelValue" class="fixed inset-0 flex items-center justify-center bg-neutral-950/90 z-20 p-4"
     @click.self="close">
     <div class="flex flex-col gap-4 bg-neutral-100 dark:bg-neutral-800 rounded-lg shadow-lg w-full max-w-md max-h-full p-6 relative" role="dialog" aria-modal="true">
       <!-- Header -->
