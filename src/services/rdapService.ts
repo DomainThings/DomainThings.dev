@@ -27,10 +27,10 @@ export const fetchRdap = async (domain: string): Promise<RdapResponse> => {
     if(!services){
       services = await getServices();
     }
-    const [_, tld] = domain.split('.');
+    const [_, tld = '.com'] = domain.split('.');
 
     const service: RdapService | undefined = services.find((service: RdapService) => service[0].includes(tld));
-    if (!service) {
+    if (!service || service[1]) {
       throw new Error(`Unable to find a RDAP provider for ".${tld}" tld`);
     }
     const serviceUrl: string = service[1][0];

@@ -22,7 +22,7 @@ const emit = defineEmits(['bookmark']);
 
 const domainData = computed<Domain>(() => {
   const name = props.domain;
-  const [label, tld] = name.split('.');
+  const [label = '', tld = ''] = name.split('.');
   const domain: Domain = { name, label, tld }
   return domain;
 });
