@@ -71,7 +71,7 @@ const dnsDialog = ref(false)
 
     <div class="flex items-center gap-2">
       <button @click="bookmark()" type="button"
-        class="text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg"
+        class="cursor-pointer text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg"
         :class="{ '!text-yellow-500 !dark:text-yellow-500': isBookmarked }">
         <StarIcon class="w-5 h-5"></StarIcon>
       </button>
@@ -83,42 +83,31 @@ const dnsDialog = ref(false)
     <div class="flex justify-between items-center gap-2 flex-1">
       <div class="flex items-center gap-1">
         <button @click="dnsDialog = true" type="button"
-          class="rounded-lg text-xs px-1 py-1 text-neutral-900 bg-neutral-100 border border-neutral-300 focus:outline-none hover:bg-neutral-100 focus:ring-4 focus:ring-gray-100 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700">
+          class="cursor-pointer rounded-lg text-xs px-1 py-1 text-neutral-900 bg-neutral-100 border border-neutral-300 focus:outline-none hover:bg-neutral-100 focus:ring-4 focus:ring-gray-100 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700">
           DNS</button>
         <button @click="rdapDialog = true" type="button"
-          class="rounded-lg text-xs px-1 py-1 text-neutral-900 bg-neutral-100 border border-neutral-300 focus:outline-none hover:bg-neutral-100 focus:ring-4 focus:ring-gray-100 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700">
+          class="cursor-pointer rounded-lg text-xs px-1 py-1 text-neutral-900 bg-neutral-100 border border-neutral-300 focus:outline-none hover:bg-neutral-100 focus:ring-4 focus:ring-gray-100 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700">
           RDAP</button>
+
       </div>
+
 
       <span v-if="availabilityStatus === 0">
         <AlertCircleIcon class="w-5 h-5 text-red-600 dark:text-red-400"></AlertCircleIcon>
       </span>
-      <span v-if="availabilityStatus === 1">
+      <span v-else-if="availabilityStatus === 1" class="flex items-center gap-2">
+        <a :href="`https://domains.cloudflare.com/?domain=${domain.name}`" target="_blank" rel="noopener noreferrer"
+          class="rounded-lg text-xs px-1 py-1 text-neutral-900 bg-neutral-100 border border-neutral-300 focus:outline-none hover:bg-neutral-100 focus:ring-4 focus:ring-gray-100 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700 flex items-center gap-1 whitespace-nowrap">
+          <span>REGISTER</span>
+          <OpenIcon class="w-3 h-3" />
+        </a>
         <CheckIcon class="w-5 h-5 text-green-600 dark:text-green-400"></CheckIcon>
       </span>
-      <span v-if="availabilityStatus === 2">
+      <span v-else-if="availabilityStatus === 2">
         <SpinnerIcon class="w-5 h-5 fill-orange-600 text-gray-200 dark:fill-orange-400 dark:text-gray-700">
         </SpinnerIcon>
       </span>
-
-      <!-- <span v-if="availabilityStatus === 0"
-        class="flex items-center gap-1 text-xs px-2 py-1 rounded bg-red-100 text-red-800 whitespace-nowrap">
-        <AlertCircleIcon class="w-5 h-5"></AlertCircleIcon>
-        Not available
-      </span>
-      <span v-if="availabilityStatus === 1"
-        class="flex items-center gap-1 text-xs px-2 py-1 rounded bg-green-100 text-green-800 whitespace-nowrap">
-        <CheckIcon class="w-5 h-5"></CheckIcon>
-        Available
-      </span>
-      <span v-if="availabilityStatus === 2"
-        class="flex items-center gap-1 text-xs px-2 py-1 rounded bg-orange-100 text-orange-800 whitespace-nowrap">
-        <SpinnerIcon class="w-5 h-5 fill-orange-800 text-gray-200"></SpinnerIcon>
-        Unknown availability
-      </span> -->
     </div>
-
-
 
     <BaseModal v-model="dnsDialog">
       <template v-slot:header>DNS {{ domain.name }}</template>
