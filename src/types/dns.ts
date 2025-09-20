@@ -1,3 +1,5 @@
+import type { DomainAvailabilityStatus } from ".";
+
 /**
  * DNS response status codes as per RFC 1035.
  * 0 = NOERROR, 1 = FORMERR, 2 = SERVFAIL, 3 = NXDOMAIN, 4 = NOTIMP, 5 = REFUSED, etc.
@@ -101,4 +103,14 @@ export interface DnsJsonResponse {
 
   /** Optional comment returned by the server. */
   Comment?: string;
+}
+
+export interface DomainDnsInfo {
+  status: DomainAvailabilityStatus;
+  dnsStatus: DnsResponseStatus;
+  hasWebRecords: boolean;
+  hasSOA: boolean;
+  hasParentSOA: boolean;
+  recordTypes: DnsRecordType[];
+  confidence: 'high' | 'medium' | 'low';
 }
