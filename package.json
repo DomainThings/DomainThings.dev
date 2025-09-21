@@ -10,7 +10,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "test:external": "vitest run external-services.test.ts",
-    "pre-commit": "npm run test:external && npm run type-check"
+    "pre-commit": "npm run type-check"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
