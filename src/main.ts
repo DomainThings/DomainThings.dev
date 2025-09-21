@@ -14,4 +14,8 @@ app.use(router)
 app.mount('#app')
 
 // Initialize analytics after app is mounted
-analyticsService.init()
+try {
+  analyticsService.init()
+} catch (error) {
+  console.warn('Analytics initialization failed:', error)
+}

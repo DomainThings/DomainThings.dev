@@ -15,4 +15,6 @@ cleanupOutdatedCaches();
 self.skipWaiting();
 clientsClaim();
 
-console.log('[DomainChecker] Hello from service worker !')
+if (import.meta.env.DEV) {
+  console.log('[DomainChecker] Hello from service worker !')
+}
