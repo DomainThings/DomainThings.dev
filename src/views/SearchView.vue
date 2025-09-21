@@ -243,7 +243,7 @@ watch(() => route.query.q, () => {
           <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
           <h3 class="text-lg font-medium mb-1">Search for domains</h3>
           <p class="text-sm">
-            Enter a domain name to check availability across extensions.<br>
+            Check domain availability across extensions.<br>
             Try "example" to see example.com, example.org, etc.
           </p>
         </div>
@@ -251,7 +251,7 @@ watch(() => route.query.q, () => {
       
       <!-- Invalid Domain Message -->
       <div v-else-if="showInvalidMessage" class="flex flex-col items-center justify-center py-12 text-center">
-        <div class="text-amber-600 dark:text-amber-400">
+        <div class="text-neutral-500 dark:text-neutral-400">
           <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
           <h3 class="text-lg font-medium mb-1">Invalid domain format</h3>
           <p class="text-sm">
