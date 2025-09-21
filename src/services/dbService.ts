@@ -4,20 +4,17 @@ import { Domain, type DomainData } from '@/types';
 /**
  * Database configuration
  */
-const DB_CONFIG = {
+const DB_CONFIG = Object.freeze({
   name: 'domaincheck-db',
   version: 4,
   stores: {
     domains: 'domains',
-    tlds: 'tlds',
+    tlds: 'tlds', 
+    searches: 'searches',
+    dnsCache: 'dnsCache',
     settings: 'settings'
-  },
-  // Legacy database for migration
-  legacy: {
-    name: 'database',
-    version: 3
   }
-} as const;
+} as const);
 
 /**
  * Domain record for database storage
@@ -60,154 +57,6 @@ interface DbResult<T> {
   readonly data?: T;
   readonly error?: string;
 }
-
-/**
- * Migrates data from legacy database to new structure
- * @returns Promise resolving to migration result
- */
-const migrateLegacyData = async (): Promise<{ success: boolean; migratedCount: number; error?: string }> => {
-  try {
-    console.log('🔄 Checking for legacy database to migrate...');
-    
-    // Try to open legacy database
-    let legacyDb: IDBPDatabase;
-    try {
-      legacyDb = await openDB(DB_CONFIG.legacy.name, DB_CONFIG.legacy.version);
-    } catch (error) {
-      // Legacy database doesn't exist, nothing to migrate
-      console.log('✅ No legacy database found, migration not needed');
-      return { success: true, migratedCount: 0 };
-    }
-    
-    // Check if legacy database has any data
-    const legacyDomainCount = await legacyDb.count('domains').catch(() => 0);
-    const legacyTldCount = await legacyDb.count('tlds').catch(() => 0);
-    
-    if (legacyDomainCount === 0 && legacyTldCount === 0) {
-      console.log('✅ Legacy database exists but is empty, cleaning up');
-      legacyDb.close();
-      // Delete empty legacy database
-      indexedDB.deleteDatabase(DB_CONFIG.legacy.name);
-      return { success: true, migratedCount: 0 };
-    }
-    
-    console.log(`📦 Found legacy data: ${legacyDomainCount} domains, ${legacyTldCount} TLDs`);
-    
-    // Open new database
-    const newDb = await getDb();
-    let migratedCount = 0;
-    
-    // Migrate domains
-    if (legacyDomainCount > 0) {
-      try {
-        const legacyDomains = await legacyDb.getAll('domains');
-        const newTx = newDb.transaction(DB_CONFIG.stores.domains, 'readwrite');
-        const newStore = newTx.objectStore(DB_CONFIG.stores.domains);
-        
-        for (const legacyDomain of legacyDomains) {
-          // Transform legacy domain to new structure
-          const migratedDomain: DomainRecord = {
-            name: legacyDomain.name || '',
-            availability: legacyDomain.availability,
-            isInWatchList: legacyDomain.isInWatchList || false,
-            isChecking: false, // Reset checking state
-            creationDate: legacyDomain.creationDate,
-            expirationDate: legacyDomain.expirationDate,
-            registrar: legacyDomain.registrar,
-            lastChecked: legacyDomain.lastChecked || new Date().toISOString()
-          };
-          
-          await newStore.put(migratedDomain);
-          migratedCount++;
-        }
-        
-        await newTx.done;
-        console.log(`✅ Migrated ${legacyDomains.length} domains`);
-      } catch (error) {
-        console.warn('⚠️ Error migrating domains:', error);
-      }
-    }
-    
-    // Migrate TLDs
-    if (legacyTldCount > 0) {
-      try {
-        const legacyTlds = await legacyDb.getAll('tlds');
-        const newTx = newDb.transaction(DB_CONFIG.stores.tlds, 'readwrite');
-        const newStore = newTx.objectStore(DB_CONFIG.stores.tlds);
-        
-        for (const legacyTld of legacyTlds) {
-          // Transform legacy TLD to new structure
-          const migratedTld: TldRecord = {
-            tld: legacyTld.tld || '',
-            isEnabled: legacyTld.isEnabled !== false, // Default to enabled
-            priority: legacyTld.priority || 0,
-            lastUpdated: Date.now(),
-            metadata: {
-              type: legacyTld.type || (legacyTld.tld?.length === 2 ? 'ccTLD' : 'gTLD'),
-              country: legacyTld.country,
-              description: legacyTld.description
-            }
-          };
-          
-          await newStore.put(migratedTld);
-          migratedCount++;
-        }
-        
-        await newTx.done;
-        console.log(`✅ Migrated ${legacyTlds.length} TLDs`);
-      } catch (error) {
-        console.warn('⚠️ Error migrating TLDs:', error);
-      }
-    }
-    
-    // Close legacy database and mark migration as complete
-    legacyDb.close();
-    
-    // Save migration completion flag
-    await saveSetting('migration_completed', {
-      version: DB_CONFIG.version,
-      timestamp: Date.now(),
-      migratedCount
-    });
-    
-    console.log(`🎉 Migration completed successfully! Migrated ${migratedCount} records`);
-    
-    // Schedule legacy database cleanup after successful migration
-    setTimeout(() => {
-      try {
-        indexedDB.deleteDatabase(DB_CONFIG.legacy.name);
-        console.log('🗑️ Legacy database cleaned up');
-      } catch (error) {
-        console.warn('⚠️ Could not delete legacy database:', error);
-      }
-    }, 5000); // Wait 5 seconds to ensure everything is stable
-    
-    return { success: true, migratedCount };
-    
-  } catch (error: any) {
-    const errorMessage = error?.message ?? String(error);
-    console.error('❌ Migration failed:', errorMessage);
-    return { 
-      success: false, 
-      migratedCount: 0, 
-      error: errorMessage 
-    };
-  }
-};
-
-/**
- * Checks if migration has already been completed
- * @returns Promise resolving to migration status
- */
-const isMigrationCompleted = async (): Promise<boolean> => {
-  try {
-    const result = await getSetting('migration_completed');
-    const migrationData = result.data as { version?: number; timestamp?: number; migratedCount?: number } | undefined;
-    return result.success && migrationData?.version === DB_CONFIG.version;
-  } catch {
-    return false;
-  }
-};
 
 /**
  * Database connection instance
@@ -288,20 +137,6 @@ export const getDb = async (): Promise<IDBPDatabase> => {
   
   try {
     dbInstance = await dbInitPromise;
-    
-    // Check and perform legacy migration if needed
-    const migrationCompleted = await isMigrationCompleted();
-    if (!migrationCompleted) {
-      console.log('🔄 Starting legacy data migration...');
-      const migrationResult = await migrateLegacyData();
-      
-      if (migrationResult.success && migrationResult.migratedCount > 0) {
-        console.log(`✅ Successfully migrated ${migrationResult.migratedCount} records from legacy database`);
-      } else if (migrationResult.error) {
-        console.warn('⚠️ Migration encountered issues:', migrationResult.error);
-      }
-    }
-    
     return dbInstance;
   } catch (error) {
     dbInitPromise = null;
@@ -631,96 +466,5 @@ export const closeDb = (): void => {
  * Forces a manual migration from legacy database
  * @returns Promise resolving to migration result
  */
-export const forceMigration = async (): Promise<DbResult<{ migratedCount: number }>> => {
-  try {
-    const migrationResult = await migrateLegacyData();
-    
-    if (migrationResult.success) {
-      return {
-        success: true,
-        data: { migratedCount: migrationResult.migratedCount }
-      };
-    } else {
-      return {
-        success: false,
-        error: migrationResult.error || 'Migration failed'
-      };
-    }
-  } catch (error) {
-    return handleDbError('force migration', error);
-  }
-};
-
-/**
- * Gets migration status information
- * @returns Promise resolving to migration status
- */
-export const getMigrationStatus = async (): Promise<DbResult<{
-  isCompleted: boolean;
-  migrationData?: {
-    version: number;
-    timestamp: number;
-    migratedCount: number;
-  };
-  legacyDbExists: boolean;
-}>> => {
-  try {
-    const isCompleted = await isMigrationCompleted();
-    const migrationSetting = await getSetting('migration_completed');
-    
-    // Check if legacy database exists
-    let legacyDbExists = false;
-    try {
-      const legacyDb = await openDB(DB_CONFIG.legacy.name, DB_CONFIG.legacy.version);
-      legacyDbExists = true;
-      legacyDb.close();
-    } catch {
-      legacyDbExists = false;
-    }
-    
-    return {
-      success: true,
-      data: {
-        isCompleted,
-        migrationData: migrationSetting.success ? migrationSetting.data as any : undefined,
-        legacyDbExists
-      }
-    };
-  } catch (error) {
-    return handleDbError('get migration status', error);
-  }
-};
-
-/**
- * Cleans up legacy database (only if migration is completed)
- * @returns Promise resolving to cleanup result
- */
-export const cleanupLegacyDatabase = async (): Promise<DbResult<boolean>> => {
-  try {
-    const isCompleted = await isMigrationCompleted();
-    
-    if (!isCompleted) {
-      return {
-        success: false,
-        error: 'Migration not completed, cannot cleanup legacy database'
-      };
-    }
-    
-    try {
-      indexedDB.deleteDatabase(DB_CONFIG.legacy.name);
-      console.log('🗑️ Legacy database cleaned up successfully');
-      return { success: true, data: true };
-    } catch (error) {
-      console.warn('⚠️ Could not delete legacy database:', error);
-      return {
-        success: false,
-        error: 'Failed to delete legacy database'
-      };
-    }
-  } catch (error) {
-    return handleDbError('cleanup legacy database', error);
-  }
-};
-
 // Export types for external use
 export type { DomainRecord, TldRecord, SettingsRecord, DbResult };

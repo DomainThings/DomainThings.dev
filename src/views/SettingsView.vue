@@ -37,14 +37,6 @@
           Gestion des données
         </h2>
         
-        <!-- Migration Status -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <h3 class="font-medium text-gray-900 dark:text-white mb-3">
-            Migration de la base de données
-          </h3>
-          <MigrationStatus />
-        </div>
-
         <!-- Storage Info -->
         <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
@@ -139,8 +131,7 @@
 import { ref, onMounted } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import DarkModeSwitch from '@/components/DarkModeSwitch.vue'
-import MigrationStatus from '@/components/MigrationStatus.vue'
-import { clearAllData, cleanupLegacyDatabase, getMigrationStatus } from '@/services/dbService'
+import { clearAllData } from '@/services/dbService'
 
 // Reactive data
 const keepSearchHistory = ref(true)
@@ -156,11 +147,6 @@ const clearStorage = async (): Promise<void> => {
       const clearResult = await clearAllData()
       if (!clearResult.success) {
         throw new Error(clearResult.error)
-      }
-      
-      const cleanupResult = await cleanupLegacyDatabase()
-      if (!cleanupResult.success) {
-        console.warn('Erreur lors du nettoyage de l\'ancienne base:', cleanupResult.error)
       }
       
       alert('Toutes les données ont été effacées.')
@@ -184,12 +170,8 @@ onMounted(async () => {
       enableSuggestions.value = parsed.enableSuggestions ?? true
     }
 
-    // Obtenir la version de la base de données
-    const migrationStatusResult = await getMigrationStatus()
-    if (migrationStatusResult.success && migrationStatusResult.data) {
-      // Version actuelle de la base de données (v4)
-      dbVersion.value = '4'
-    }
+    // Version de la base de données fixe (v4)
+    dbVersion.value = '4'
   } catch (error) {
     console.error('Erreur lors du chargement des paramètres:', error)
   }
