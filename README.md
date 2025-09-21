@@ -73,7 +73,7 @@ ESLint                   →  Code quality and consistency
 ```
 Cloudflare DNS           →  DNS-over-HTTPS for domain lookups
 IANA RDAP               →  Official domain registry data
-GitHub Pages            →  Static hosting and deployment
+Cloudflare Pages        →  Static hosting and deployment
 ```
 
 ---
@@ -89,8 +89,8 @@ GitHub Pages            →  Static hosting and deployment
 
 ```bash
 # Clone the repository
-git clone https://github.com/domain-check/domain-check.github.io.git
-cd domain-check.github.io
+git clone https://github.com/DomainThings/DomainThings.dev.git
+cd DomainThings.dev
 
 # Install dependencies
 npm install
