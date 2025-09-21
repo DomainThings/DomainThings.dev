@@ -74,6 +74,10 @@ watch(searchQuery, () => {
 
 <template>
   <DefaultLayout>
+    <template #page-title>
+      <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Watch List</h2>
+    </template>
+    
     <!-- Search Form -->
     <div class="flex flex-col justify-center gap-4 mb-6">
       <form @submit.prevent autocomplete="off" class="flex flex-col gap-3">

@@ -1,11 +1,12 @@
 <template>
   <DefaultLayout>
+    <template #page-title>
+      <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Settings</h2>
+    </template>
+    
     <div class="settings-view space-y-6">
       <!-- Header -->
       <div class="text-center pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Paramètres
-        </h1>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           Gérez vos préférences et les données de l'application
         </p>

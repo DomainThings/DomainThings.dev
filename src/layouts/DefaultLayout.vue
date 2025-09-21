@@ -77,9 +77,23 @@ defineExpose({
 <template>
   <div class="flex flex-col min-h-screen items-center">
     <!-- Header Navigation -->
-    <header class="flex w-full h-16 px-4 py-2 justify-end items-center bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
-      <!-- Mobile Menu Toggle -->
-      <div class="sm:hidden">
+    <header class="fixed top-0 left-0 right-0 z-50 flex w-full h-16 px-4 py-2 justify-between items-center bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+      <!-- App Title in Header -->
+      <div class="flex-shrink-0">
+        <h1 class="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+          <RouterLink 
+            :to="{ name: 'Search' }"
+            class="hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+          >
+            Domain Check
+          </RouterLink>
+        </h1>
+      </div>
+
+      <!-- Navigation Container -->
+      <div class="flex items-center">
+        <!-- Mobile Menu Toggle -->
+        <div class="sm:hidden">
         <button 
           v-if="!showMobileMenu"
           @click="toggleMobileMenu"
@@ -98,40 +112,34 @@ defineExpose({
         </button>
       </div>
 
-      <!-- Desktop Navigation -->
-      <nav class="hidden sm:flex gap-8 justify-end items-center" role="navigation" aria-label="Main navigation">
-        <RouterLink 
-          v-for="item in navigationItems"
-          :key="item.name"
-          :to="{ name: item.routeName }"
-          :class="getRouteLinkClass(item.routeName)"
-          :aria-current="isRouteActive(item.routeName) ? 'page' : undefined"
-        >
-          {{ item.label }}
-        </RouterLink>
-        <DarkModeSwitch />
-      </nav>
+        <!-- Desktop Navigation -->
+        <nav class="hidden sm:flex gap-8 justify-end items-center" role="navigation" aria-label="Main navigation">
+          <RouterLink 
+            v-for="item in navigationItems"
+            :key="item.name"
+            :to="{ name: item.routeName }"
+            :class="getRouteLinkClass(item.routeName)"
+            :aria-current="isRouteActive(item.routeName) ? 'page' : undefined"
+          >
+            {{ item.label }}
+          </RouterLink>
+          <DarkModeSwitch />
+        </nav>
+      </div>
     </header>
 
-    <!-- App Title -->
+    <!-- Page Title -->
     <div 
       v-if="!showMobileMenu"
-      class="flex justify-center items-center px-4 py-6 mb-8"
+      class="flex justify-center items-center px-4 py-6 mt-16"
     >
-      <h1 class="text-3xl font-extrabold text-neutral-900 dark:text-neutral-100">
-        <RouterLink 
-          :to="{ name: 'Search' }"
-          class="hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
-        >
-          Domain Check
-        </RouterLink>
-      </h1>
+      <slot name="page-title" />
     </div>
 
     <!-- Mobile Navigation Menu (Full Height) -->
     <div 
       v-if="showMobileMenu"
-      class="flex-1 px-4 py-2 flex flex-col gap-12 items-center text-neutral-900 dark:text-neutral-100 sm:hidden"
+      class="flex-1 px-4 py-2 flex flex-col gap-12 items-center text-neutral-900 dark:text-neutral-100 sm:hidden mt-16 mb-12"
     >
       <nav class="flex flex-col gap-12 items-center mt-12" role="navigation" aria-label="Mobile navigation">
         <RouterLink 
@@ -151,13 +159,13 @@ defineExpose({
     <!-- Main Content -->
     <main 
       v-if="!showMobileMenu"
-      class="flex-1 px-4 py-2 max-w-lg w-full text-neutral-900 dark:text-neutral-100"
+      class="flex-1 px-4 py-2 max-w-lg w-full text-neutral-900 dark:text-neutral-100 mb-12"
     >
       <slot />
     </main>
 
     <!-- Footer -->
-    <footer class="flex w-full h-12 px-4 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
+    <footer class="fixed bottom-0 left-0 right-0 z-50 flex w-full h-12 px-4 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
       <div class="flex w-full justify-end items-center">
         <a 
           href="https://github.com/domain-check/domain-check.github.io" 

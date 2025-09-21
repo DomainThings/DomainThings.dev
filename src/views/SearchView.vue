@@ -243,6 +243,10 @@ watch(() => route.query.q, () => {
 
 <template>
   <DefaultLayout>
+    <template #page-title>
+      <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Search Domains</h2>
+    </template>
+    
     <div class="flex flex-col justify-center gap-4">
       <!-- Search Form -->
       <form action="/" method="get" role="search" @submit.prevent="submit" autocomplete="off"
