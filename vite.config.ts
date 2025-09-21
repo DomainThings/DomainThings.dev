@@ -13,7 +13,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       srcDir: 'src',
       filename: 'serviceWorker.js',
-      manifest: false
+      // manifest.json in public folder
+      manifest: false 
     }),
     tailwindcss()
   ],
