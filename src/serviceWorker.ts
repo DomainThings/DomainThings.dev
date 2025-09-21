@@ -16,5 +16,5 @@ self.skipWaiting();
 clientsClaim();
 
 if (import.meta.env.DEV) {
-  console.log('[DomainChecker] Hello from service worker !')
+  console.log('[DomainThings] Hello from service worker !')
 }

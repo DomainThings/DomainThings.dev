@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌐 Domain Check
+# 🌐 DomainThings
 
 **A modern Progressive Web App for domain analysis and management**
 
@@ -16,7 +16,7 @@
 
 ## 🎯 Overview
 
-Domain Check is a Progressive Web Application that allows you to search for domain availability and track domains of interest. Built with modern web standards and focusing on client-side processing for privacy, it provides a fast and reliable domain analysis experience.
+DomainThings is a Progressive Web Application that allows you to search for domain availability and track domains of interest. Built with modern web standards and focusing on client-side processing for privacy, it provides a fast and reliable domain analysis experience.
 
 ### 🏆 Key Benefits
 

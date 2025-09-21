@@ -219,7 +219,7 @@ export const fetchDns = async (domain: string, type: DnsRecordType = DnsRecordTy
     const fetchPromise = fetch(`${DNS_CONFIG.ENDPOINT}?name=${encodeURIComponent(domain)}&type=${type}`, {
       headers: {
         'accept': 'application/dns-json',
-        'user-agent': 'DomainCheck/1.0'
+        'user-agent': 'DomainThings/1.0'
       },
       // Add request mode for better error handling
       mode: 'cors',

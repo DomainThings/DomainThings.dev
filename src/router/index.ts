@@ -14,14 +14,14 @@ interface RouteTitle {
 
 // Constants
 const ROUTE_TITLES: RouteTitle = Object.freeze({
-  'Search': 'Domain Check - Search Domains',
-  'WatchList': 'Domain Check - Watch List', 
-  'ExtensionList': 'Domain Check - TLD Extensions',
-  'Settings': 'Domain Check - Settings',
-  '404': 'Domain Check - Page Not Found'
+  'Search': 'DomainThings - Search Domains',
+  'WatchList': 'DomainThings - Watch List', 
+  'ExtensionList': 'DomainThings - TLD Extensions',
+  'Settings': 'DomainThings - Settings',
+  '404': 'DomainThings - Page Not Found'
 });
 
-const DEFAULT_TITLE = 'Domain Check';
+const DEFAULT_TITLE = 'DomainThings';
 const ANALYTICS_DELAY = 100; // ms - Delay to ensure route transition is complete
 
 // Route configuration

@@ -115,7 +115,7 @@ export const getServices = async (): Promise<RdapResult<RdapService[]>> => {
     const fetchPromise = fetch(RDAP_CONFIG.BOOTSTRAP_URL, {
       headers: {
         'accept': 'application/json',
-        'user-agent': 'DomainCheck/1.0'
+        'user-agent': 'DomainThings/1.0'
       },
       mode: 'cors',
       cache: 'default'
@@ -274,7 +274,7 @@ const performRdapQuery = async (
     const fetchPromise = fetch(rdapUrl, {
       headers: {
         'accept': 'application/rdap+json',
-        'user-agent': 'DomainCheck/1.0'
+        'user-agent': 'DomainThings/1.0'
       },
       mode: 'cors',
       cache: 'default'

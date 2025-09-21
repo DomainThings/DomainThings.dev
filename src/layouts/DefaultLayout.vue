@@ -85,7 +85,7 @@ defineExpose({
             :to="{ name: 'Search' }"
             class="hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
           >
-            Domain Check
+            DomainThings
           </RouterLink>
         </h1>
       </div>
