@@ -31,7 +31,7 @@
     "typescript": "~5.9.2",
     "vite": "^7.1.6",
     "vite-plugin-pwa": "^1.0.3",
-    "vite-plugin-vue-devtools": "^8.0.1",
+    "vite-plugin-vue-devtools": "^8.0.2",
     "vue-tsc": "^3.0.6",
     "workbox-build": "^7.3.0",
     "workbox-window": "^7.3.0"
