@@ -4,11 +4,8 @@
 
 **A modern Progressive Web App for domain analysis and management**
 
-[![MIT License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?style=for-the-badge&logo=vue.js)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-
-*Professional domain search and tracking tool built with modern web technologies*
+[![CodeQL](https://github.com/domain-check/domain-check.github.io/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/domain-check/domain-check.github.io/actions/workflows/github-code-scanning/codeql)
+[![External Services](https://github.com/domain-check/domain-check.github.io/actions/workflows/ci.yml/badge.svg)](https://github.com/domain-check/domain-check.github.io/actions/workflows/ci.yml)
 
 </div>
 
