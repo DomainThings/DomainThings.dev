@@ -1,2 +1,2 @@
 # Redirect all traffic from .pages.dev to custom domain
-https://domainthings-dev.pages.dev/* https://domainthings.dev/:splat 301!
+/* https://domainthings.dev/:splat 301
