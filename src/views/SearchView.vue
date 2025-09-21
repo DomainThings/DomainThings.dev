@@ -6,6 +6,7 @@ import router from '@/router';
 import { useRoute } from 'vue-router';
 import { isDomainValid } from '@/utils/domainUtil';
 import SearchIcon from '@/icons/SearchIcon.vue';
+import CloseIcon from '@/icons/CloseIcon.vue';
 import { useSearchStore } from '@/stores/searchStore';
 import { getTlds } from '@/services/rdapService';
 import { getDb } from '@/services/dbService';
@@ -31,7 +32,7 @@ onMounted(async () => {
 
   window.onscroll = () => {
     let bottomOfWindow = Math.max(window.pageYOffset, document.documentElement.scrollTop, document.body.scrollTop) + window.innerHeight + 32 >= document.documentElement.offsetHeight
-    if (bottomOfWindow) {
+    if (bottomOfWindow && showAllTlds.value) {
       loadMoreItems();
     }
   }
@@ -90,6 +91,10 @@ const loadMoreItems = () => {
   addedDomains.forEach((addedDomain) => domains.value.push(addedDomain));
 }
 
+const clearSearch = (): void => {
+  q.value = '';
+}
+
 </script>
 
 <template>
@@ -102,7 +107,15 @@ const loadMoreItems = () => {
             <SearchIcon class="w-5 h-5 text-neutral-900 dark:text-neutral-100"></SearchIcon>
           </div>
           <input type="text" name="q" v-model="q" placeholder="Search domain name"
-            class="ps-10 pe-5 py-3 w-full rounded-3xl text-neutral-900 bg-neutral-200 text-base placeholder-neutral-500 dark:bg-neutral-800 dark:placeholder-neutral-300 dark:text-neutral-100 !outline-none">
+            class="ps-10 pe-12 py-3 w-full rounded-3xl text-neutral-900 bg-neutral-200 text-base placeholder-neutral-500 dark:bg-neutral-800 dark:placeholder-neutral-300 dark:text-neutral-100 !outline-none">
+          <button 
+            v-if="q.trim()"
+            @click="clearSearch"
+            type="button"
+            class="absolute inset-y-0 end-0 flex items-center pe-3.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+            :aria-label="'Clear search'">
+            <CloseIcon class="w-5 h-5" />
+          </button>
         </div>
         <label class="inline-flex items-center cursor-pointer">
           <input type="checkbox" v-model="showAllTlds" class="sr-only peer">
