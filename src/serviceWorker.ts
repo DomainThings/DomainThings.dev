@@ -14,7 +14,3 @@ cleanupOutdatedCaches();
 // do not wait page refresh or change to update service worker
 self.skipWaiting();
 clientsClaim();
-
-if (import.meta.env.DEV) {
-  console.log('[DomainThings] Hello from service worker !')
-}
