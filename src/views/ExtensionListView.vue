@@ -5,6 +5,7 @@ import { getTlds } from '@/services/rdapService';
 import TldItem from '@/components/TldItem.vue';
 import SpinnerIcon from '@/icons/SpinnerIcon.vue';
 import SearchIcon from '@/icons/SearchIcon.vue';
+import CloseIcon from '@/icons/CloseIcon.vue';
 import { getDb } from '@/services/dbService';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -145,7 +146,15 @@ watch([searchQuery, showBookmarkedOnly], () => {
             type="text" 
             v-model="searchQuery" 
             placeholder="Search extensions (e.g., com, .org, dev...)"
-            class="ps-10 pe-5 py-3 w-full rounded-3xl text-neutral-900 bg-neutral-200 text-base placeholder-neutral-500 dark:bg-neutral-800 dark:placeholder-neutral-300 dark:text-neutral-100 !outline-none">
+            class="ps-10 pe-12 py-3 w-full rounded-3xl text-neutral-900 bg-neutral-200 text-base placeholder-neutral-500 dark:bg-neutral-800 dark:placeholder-neutral-300 dark:text-neutral-100 !outline-none">
+          <button 
+            v-if="searchQuery.trim()"
+            @click="clearSearch"
+            type="button"
+            class="absolute inset-y-0 end-0 flex items-center pe-3.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+            :aria-label="'Clear search'">
+            <CloseIcon class="w-5 h-5" />
+          </button>
         </div>
         
         <!-- Filter Options -->
@@ -156,15 +165,6 @@ watch([searchQuery, showBookmarkedOnly], () => {
             </div>
             <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show bookmarked only</span>
           </label>
-          
-          <!-- Clear search button -->
-          <button 
-            v-if="searchQuery.trim()"
-            @click="clearSearch"
-            type="button"
-            class="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 underline">
-            Clear search
-          </button>
         </div>
       </form>
       
