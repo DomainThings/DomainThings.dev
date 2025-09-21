@@ -39,12 +39,26 @@ const domains = ref<string[]>([]);
 let scrollHandler: (() => void) | null = null;
 
 // Computed properties
-const hasValidInput = computed(() => !!q.value && isDomainValid(q.value));
+const hasValidInput = computed(() => {
+  const trimmed = q.value?.trim();
+  if (!trimmed) return false;
+  
+  // Allow either:
+  // 1. Full domain validation (e.g., "example.com")
+  // 2. Valid label only (e.g., "example") for searching across TLDs
+  return isDomainValid(trimmed) || /^[a-zA-Z0-9-]{1,63}$/.test(trimmed);
+});
+
 const isSearchingSpecificDomain = computed(() => q.value.includes('.'));
 const searchLabel = computed(() => q.value.split('.')[0]);
 const hasResults = computed(() => domains.value.length > 0);
 const showWelcomeMessage = computed(() => !q.value.trim());
-const showInvalidMessage = computed(() => q.value.trim() && !isDomainValid(q.value));
+
+const showInvalidMessage = computed(() => {
+  const trimmed = q.value?.trim();
+  return trimmed && !hasValidInput.value;
+});
+
 const showNoResultsMessage = computed(() => isFormValid.value && isSubmitted.value && !hasResults.value);
 
 // Lifecycle hooks
@@ -56,6 +70,11 @@ onMounted(async () => {
   isFormValid.value = hasValidInput.value;
   if (isFormValid.value) {
     submit();
+  } else if (bookmarkedTlds.value.length > 0) {
+    // If no initial query but we have bookmarked TLDs, 
+    // show a default state or prepare for quick search
+    // This maintains the previous UX where bookmarked TLDs were immediately accessible
+    console.log('Ready to search with', bookmarkedTlds.value.length, 'bookmarked TLDs');
   }
 });
 
@@ -67,12 +86,18 @@ onUnmounted(() => {
 const initializeData = async (): Promise<void> => {
   try {
     isLoading.value = true;
-    const [fetchedTlds, db] = await Promise.all([
+    const [tldsResult, db] = await Promise.all([
       getTlds(),
       getDb()
     ]);
     
-    tlds.value = Object.freeze(fetchedTlds);
+    if (tldsResult.success && tldsResult.data) {
+      tlds.value = Object.freeze(tldsResult.data);
+    } else {
+      console.error('Error fetching TLDs:', tldsResult.error);
+      tlds.value = [];
+    }
+    
     const bookmarks = await db.getAll('tlds');
     bookmarkedTlds.value = Object.freeze(bookmarks);
   } catch (error) {
@@ -108,14 +133,23 @@ const cleanupInfiniteScroll = (): void => {
 };
 
 const submit = (): void => {
-  if (!hasValidInput.value) return;
+  // Allow submission if either:
+  // 1. We have valid input (label or full domain)
+  // 2. We have bookmarked TLDs and want to search with them (legacy behavior)
+  const canSubmit = hasValidInput.value || (bookmarkedTlds.value.length > 0 && q.value.trim().length === 0);
+  
+  if (!canSubmit) return;
   
   // Update validation state
   isFormValid.value = true;
   
-  if (isSearchingSpecificDomain.value) {
+  // If no input but we have bookmarked TLDs, provide a default search
+  const effectiveQuery = q.value.trim() || 'example'; // Default to 'example' if no input
+  const effectiveLabel = effectiveQuery.split('.')[0];
+  
+  if (effectiveQuery.includes('.')) {
     // User searched for specific domain (e.g., "example.com")
-    domains.value = [q.value];
+    domains.value = [effectiveQuery];
   } else if (showAllTlds.value) {
     // Show all TLDs - start with bookmarked ones, then load more
     const tldsToUse = bookmarkedTlds.value.length > 0 
@@ -123,7 +157,7 @@ const submit = (): void => {
       : [{ tld: 'com' }]; // Fallback to .com if no bookmarks
     
     // Start with bookmarked TLDs
-    domains.value = tldsToUse.map((bookmark) => `${searchLabel.value}.${bookmark.tld}`);
+    domains.value = tldsToUse.map((bookmark) => `${effectiveLabel}.${bookmark.tld}`);
     
     // Then load more non-bookmarked TLDs
     loadMoreItems();
@@ -133,7 +167,7 @@ const submit = (): void => {
       ? bookmarkedTlds.value 
       : [{ tld: 'com' }]; // Fallback to .com if no bookmarks
     
-    domains.value = tldsToUse.map((bookmark) => `${searchLabel.value}.${bookmark.tld}`);
+    domains.value = tldsToUse.map((bookmark) => `${effectiveLabel}.${bookmark.tld}`);
   }
   
   isSubmitted.value = true;
@@ -155,6 +189,24 @@ const loadMoreItems = (): void => {
 
 const clearSearch = (): void => {
   q.value = '';
+};
+
+/**
+ * Allows searching with bookmarked TLDs even without input (restores legacy behavior)
+ */
+const searchWithBookmarks = (label: string = 'example'): void => {
+  if (bookmarkedTlds.value.length === 0) return;
+  
+  // Set the query if not already set
+  if (!q.value.trim()) {
+    q.value = label;
+  }
+  
+  // Force submission
+  const effectiveLabel = q.value.trim() || label;
+  domains.value = bookmarkedTlds.value.map((bookmark) => `${effectiveLabel}.${bookmark.tld}`);
+  isSubmitted.value = true;
+  isFormValid.value = true;
 };
 
 // Watchers for reactive behavior (preserving UX)
@@ -242,10 +294,37 @@ watch(() => route.query.q, () => {
         <div class="text-neutral-500 dark:text-neutral-400">
           <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
           <h3 class="text-lg font-medium mb-1">Search for domains</h3>
-          <p class="text-sm">
+          <p class="text-sm mb-4">
             Check domain availability across extensions.<br>
             Try "example" to see example.com, example.org, etc.
           </p>
+          
+          <!-- Quick Actions for Bookmarked TLDs -->
+          <div v-if="bookmarkedTlds.length > 0" class="mt-6 space-y-3">
+            <p class="text-xs text-neutral-400 dark:text-neutral-500">
+              Or try with your {{ bookmarkedTlds.length }} bookmarked extension{{ bookmarkedTlds.length > 1 ? 's' : '' }}:
+            </p>
+            <div class="flex flex-wrap gap-2 justify-center">
+              <button
+                @click="searchWithBookmarks('example')"
+                class="px-3 py-1.5 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+              >
+                Search "example"
+              </button>
+              <button
+                @click="searchWithBookmarks('test')"
+                class="px-3 py-1.5 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded-full hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+              >
+                Search "test"
+              </button>
+              <button
+                @click="searchWithBookmarks('demo')"
+                class="px-3 py-1.5 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+              >
+                Search "demo"
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       

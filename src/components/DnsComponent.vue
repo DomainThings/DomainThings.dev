@@ -74,7 +74,17 @@ async function fetchDnsData(): Promise<void> {
   isDnsLoading.value = true;
   
   try {
-    dnsResponse.value = await fetchDns(props.domain, dnsType.value);
+    const result = await fetchDns(props.domain, dnsType.value);
+    
+    if (result.success && result.data) {
+      dnsResponse.value = result.data;
+    } else {
+      dnsError.value = {
+        title: 'DNS request failed',
+        text: result.error || 'Unknown DNS error'
+      };
+      dnsResponse.value = null;
+    }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     dnsError.value = {

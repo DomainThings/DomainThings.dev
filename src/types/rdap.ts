@@ -1,23 +1,40 @@
+/**
+ * RDAP (Registration Data Access Protocol) type definitions
+ * @see https://tools.ietf.org/html/rfc7483
+ */
+
+/**
+ * RDAP bootstrap configuration from IANA
+ */
 export interface RdapBootstrap {
-  version: string;
-  description: string;
-  publication: string;
-  services: RdapService[];
+  readonly version: string;
+  readonly description: string;
+  readonly publication: string;
+  readonly services: readonly RdapService[];
 }
 
-export type RdapService = [string[], string[]];
+/**
+ * RDAP service configuration - [TLDs[], ServiceURLs[]]
+ */
+export type RdapService = readonly [readonly string[], readonly string[]];
 
+/**
+ * RDAP link object as defined in RFC 7483
+ */
 export interface RdapLink {
-  value: string
-  rel: string
-  href: string
-  hreflang?: string[];
-  type?: string
-  media?: string;
-  title?: string;
+  readonly value: string;
+  readonly rel: string;
+  readonly href: string;
+  readonly hreflang?: readonly string[];
+  readonly type?: string;
+  readonly media?: string;
+  readonly title?: string;
 }
 
-type RdapStatus =
+/**
+ * RDAP status values as defined in RFC 7483
+ */
+export type RdapStatus =
   | "unknown"
   | "validated"
   | "renew prohibited"
@@ -38,7 +55,10 @@ type RdapStatus =
   | "pending update"
   | "pending delete";
 
-type RdapNoticeAndRemarkTypes =
+/**
+ * RDAP notice and remark types as defined in RFC 7483
+ */
+export type RdapNoticeAndRemarkTypes =
   | "result set truncated due to authorization"
   | "result set truncated due to excessive load"
   | "result set truncated due to unexplainable reasons"
@@ -46,66 +66,89 @@ type RdapNoticeAndRemarkTypes =
   | "object truncated due to excessive load"
   | "object truncated due to unexplainable reasons";
 
+/**
+ * RDAP notice object
+ */
 export interface RdapNotice {
-  title?: string
-  type?: RdapNoticeAndRemarkTypes;
-  description: string[]
-  links?: RdapLink[]
+  readonly title?: string;
+  readonly type?: RdapNoticeAndRemarkTypes;
+  readonly description: readonly string[];
+  readonly links?: readonly RdapLink[];
 }
 
+/**
+ * Main RDAP response object for domain queries
+ */
 export interface RdapResponse {
-  objectClassName: string
-  handle: string
-  ldhName: string
-  nameservers: RdapNameserver[]
-  secureDNS: { delegationSigned: boolean }
-  links: RdapLink[]
-  entities: RdapEntity[]
-  events: RdapEvent[]
-  status: RdapStatus[]
-  notices: RdapNotice[]
-  rdapConformance: string[]
-  port43: string
-}
-
-export interface RdapEvent {
-  eventAction: string
-  eventDate: string
-  eventActor?: string
-  status?: RdapStatus[]
-  links?: RdapLink[];
-}
-
-export interface RdapNameserver {
-  objectClassName: string;
-  handle?: string;
-  ldhName?: string;
-  unicodeName?: string;
-  ipAddresses?: {
-    v6?: string[];
-    v4: string[];
+  readonly objectClassName: string;
+  readonly handle: string;
+  readonly ldhName: string;
+  readonly nameservers?: readonly RdapNameserver[];
+  readonly secureDNS?: {
+    readonly delegationSigned: boolean;
   };
-  entities?: RdapEntity[];
-  status?: RdapStatus[];
-  remarks?: RdapNotice[];
-  links?: RdapLink[];
-  port43?: string;
-  events?: RdapEvent[];
+  readonly links?: readonly RdapLink[];
+  readonly entities?: readonly RdapEntity[];
+  readonly events?: readonly RdapEvent[];
+  readonly status?: readonly RdapStatus[];
+  readonly notices?: readonly RdapNotice[];
+  readonly rdapConformance?: readonly string[];
+  readonly port43?: string;
 }
 
-export interface PublicId { type: string, identifier: string }
+/**
+ * RDAP event object representing domain lifecycle events
+ */
+export interface RdapEvent {
+  readonly eventAction: string;
+  readonly eventDate: string;
+  readonly eventActor?: string;
+  readonly status?: readonly RdapStatus[];
+  readonly links?: readonly RdapLink[];
+}
 
+/**
+ * RDAP nameserver object
+ */
+export interface RdapNameserver {
+  readonly objectClassName: string;
+  readonly handle?: string;
+  readonly ldhName?: string;
+  readonly unicodeName?: string;
+  readonly ipAddresses?: {
+    readonly v6?: readonly string[];
+    readonly v4?: readonly string[];
+  };
+  readonly entities?: readonly RdapEntity[];
+  readonly status?: readonly RdapStatus[];
+  readonly remarks?: readonly RdapNotice[];
+  readonly links?: readonly RdapLink[];
+  readonly port43?: string;
+  readonly events?: readonly RdapEvent[];
+}
+
+/**
+ * Public identifier for RDAP entities
+ */
+export interface PublicId {
+  readonly type: string;
+  readonly identifier: string;
+}
+
+/**
+ * RDAP entity object representing persons, organizations, or roles
+ */
 export interface RdapEntity {
-  objectClassName: string
-  handle?: string
-  vcardArray?: [
+  readonly objectClassName: string;
+  readonly handle?: string;
+  readonly vcardArray?: readonly [
     string,
-    Array<[string, object, string, string] | [string, object, string, string[]]>
-  ],
-  roles: string[]
-  publicIds: PublicId[]
-  entities: RdapEntity[]
-  events: RdapEvent[]
-  links: RdapLink[]
-  legalRepresentative: string
+    readonly (readonly [string, object, string, string] | readonly [string, object, string, readonly string[]])[]
+  ];
+  readonly roles?: readonly string[];
+  readonly publicIds?: readonly PublicId[];
+  readonly entities?: readonly RdapEntity[];
+  readonly events?: readonly RdapEvent[];
+  readonly links?: readonly RdapLink[];
+  readonly legalRepresentative?: string;
 }

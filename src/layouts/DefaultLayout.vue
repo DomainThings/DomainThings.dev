@@ -23,7 +23,8 @@ const showMobileMenu = ref(false);
 const navigationItems: readonly NavigationItem[] = Object.freeze([
   { name: 'search', label: 'Search', routeName: 'Search' },
   { name: 'watchlist', label: 'Watch list', routeName: 'WatchList' },
-  { name: 'extensions', label: 'Extensions', routeName: 'ExtensionList' }
+  { name: 'extensions', label: 'Extensions', routeName: 'ExtensionList' },
+  { name: 'settings', label: 'Settings', routeName: 'Settings' }
 ]);
 
 // Computed properties

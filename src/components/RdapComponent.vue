@@ -52,16 +52,32 @@ const fetchRdapData = async (): Promise<void> => {
   isRdapLoading.value = true;
   
   try {
-    const response = await fetchRdap(props.domain);
+    const result = await fetchRdap(props.domain);
     
-    // Sort events by date (newest first)
-    if (response.events) {
-      response.events.sort((a: RdapEvent, b: RdapEvent) => {
-        return new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime();
-      });
+    if (result.success && result.data) {
+      const response = result.data;
+      
+      // Sort events by date (newest first) if they exist
+      if (response.events) {
+        const sortedEvents = [...response.events].sort((a: RdapEvent, b: RdapEvent) => {
+          return new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime();
+        });
+        
+        // Create a new response object with sorted events
+        rdapResponse.value = {
+          ...response,
+          events: sortedEvents
+        };
+      } else {
+        rdapResponse.value = response;
+      }
+    } else {
+      rdapError.value = {
+        title: 'RDAP request failed',
+        text: result.error || 'Unknown RDAP error'
+      };
+      rdapResponse.value = null;
     }
-    
-    rdapResponse.value = response;
   } catch (error: unknown) {
     console.error('RDAP fetch error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

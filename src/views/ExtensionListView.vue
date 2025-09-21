@@ -81,8 +81,14 @@ onMounted(async () => {
 const fetchTlds = async (): Promise<void> => {
   isLoading.value = true;
   try {
-    const fetchedTlds = await getTlds();
-    tlds.value = Object.freeze(fetchedTlds);
+    const result = await getTlds();
+    
+    if (result.success && result.data) {
+      tlds.value = Object.freeze(result.data);
+    } else {
+      console.error('Error fetching TLDs:', result.error);
+      tlds.value = [];
+    }
   } catch (error) {
     console.error('Error fetching TLDs:', error);
     tlds.value = [];

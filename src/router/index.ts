@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import SearchView from '@/views/SearchView.vue';
 import WatchListView from '@/views/WatchListView.vue';
 import ExtensionListView from '@/views/ExtensionListView.vue';
+import SettingsView from '@/views/SettingsView.vue';
 import Error404View from '@/views/Error404View.vue';
 import analyticsService from '@/services/analyticsService';
 
@@ -16,6 +17,7 @@ const ROUTE_TITLES: RouteTitle = Object.freeze({
   'Search': 'Domain Check - Search Domains',
   'WatchList': 'Domain Check - Watch List', 
   'ExtensionList': 'Domain Check - TLD Extensions',
+  'Settings': 'Domain Check - Settings',
   '404': 'Domain Check - Page Not Found'
 });
 
@@ -49,6 +51,15 @@ const routes: readonly RouteRecordRaw[] = Object.freeze([
     meta: {
       title: 'TLD Extensions',
       description: 'Browse and bookmark TLD extensions'
+    }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: SettingsView,
+    meta: {
+      title: 'Settings',
+      description: 'Manage application settings and preferences'
     }
   },
   {
