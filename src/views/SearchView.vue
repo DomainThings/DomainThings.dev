@@ -43,6 +43,9 @@ const hasValidInput = computed(() => !!q.value && isDomainValid(q.value));
 const isSearchingSpecificDomain = computed(() => q.value.includes('.'));
 const searchLabel = computed(() => q.value.split('.')[0]);
 const hasResults = computed(() => domains.value.length > 0);
+const showWelcomeMessage = computed(() => !q.value.trim());
+const showInvalidMessage = computed(() => q.value.trim() && !isDomainValid(q.value));
+const showNoResultsMessage = computed(() => isFormValid.value && isSubmitted.value && !hasResults.value);
 
 // Lifecycle hooks
 onMounted(async () => {
@@ -234,12 +237,60 @@ watch(() => route.query.q, () => {
         />
       </div>
       
-      <!-- Empty State -->
-      <div v-else-if="isFormValid && isSubmitted && !hasResults" class="flex flex-col items-center justify-center py-12 text-center">
+      <!-- Welcome Message -->
+      <div v-else-if="showWelcomeMessage" class="flex flex-col items-center justify-center py-12 text-center">
+        <div class="text-neutral-500 dark:text-neutral-400">
+          <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
+          <h3 class="text-lg font-medium mb-1">Search for domains</h3>
+          <p class="text-sm">
+            Enter a domain name to check availability across extensions.<br>
+            Try "example" to see example.com, example.org, etc.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Invalid Domain Message -->
+      <div v-else-if="showInvalidMessage" class="flex flex-col items-center justify-center py-12 text-center">
+        <div class="text-amber-600 dark:text-amber-400">
+          <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
+          <h3 class="text-lg font-medium mb-1">Invalid domain format</h3>
+          <p class="text-sm">
+            <span v-if="q.includes('..')">
+              Domain names cannot contain consecutive dots.
+            </span>
+            <span v-else-if="q.endsWith('.')">
+              Domain names cannot end with a dot.
+            </span>
+            <span v-else-if="q.includes(' ')">
+              Domain names cannot contain spaces.
+            </span>
+            <span v-else-if="!/^[a-zA-Z0-9.-]+$/.test(q)">
+              Domain names can only contain letters, numbers, dots and hyphens.
+            </span>
+            <span v-else>
+              Please enter a valid domain name (e.g., "example" or "example.com").
+            </span>
+            <br>
+            <button @click="clearSearch" class="text-blue-600 dark:text-blue-400 hover:underline mt-1">Clear and try again</button>
+          </p>
+        </div>
+      </div>
+      
+      <!-- No Results Message -->
+      <div v-else-if="showNoResultsMessage" class="flex flex-col items-center justify-center py-12 text-center">
         <div class="text-neutral-500 dark:text-neutral-400">
           <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
           <h3 class="text-lg font-medium mb-1">No domains to show</h3>
-          <p class="text-sm">Try adjusting your search criteria.</p>
+          <p class="text-sm">
+            <span v-if="!showAllTlds && bookmarkedTlds.length === 0">
+              You haven't bookmarked any extensions yet. 
+              <button @click="showAllTlds = true" class="text-blue-600 dark:text-blue-400 hover:underline">Show all extensions</button>
+              or visit the extensions page to bookmark some.
+            </span>
+            <span v-else>
+              Try adjusting your search or toggle "Show all extensions".
+            </span>
+          </p>
         </div>
       </div>
     </div>
