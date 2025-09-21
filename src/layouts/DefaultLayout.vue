@@ -1,76 +1,172 @@
 <script lang="ts" setup>
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
 import DarkModeSwitch from '@/components/DarkModeSwitch.vue';
 import BurgerIcon from '@/icons/BurgerIcon.vue';
 import CloseIcon from '@/icons/CloseIcon.vue';
 import GithubIcon from '@/icons/GithubIcon.vue';
-import router from '@/router';
-import { ref } from 'vue';
 
+// Types
+interface NavigationItem {
+  readonly name: string;
+  readonly label: string;
+  readonly routeName: string;
+}
+
+// Router
+const route = useRoute();
+
+// Reactive state
 const showMobileMenu = ref(false);
+
+// Navigation configuration
+const navigationItems: readonly NavigationItem[] = Object.freeze([
+  { name: 'search', label: 'Search', routeName: 'Search' },
+  { name: 'watchlist', label: 'Watch list', routeName: 'WatchList' },
+  { name: 'extensions', label: 'Extensions', routeName: 'ExtensionList' }
+]);
+
+// Computed properties
+const currentRouteName = computed(() => route.name);
+
+const isRouteActive = (routeName: string): boolean => {
+  return currentRouteName.value === routeName;
+};
+
+const getRouteLinkClass = (routeName: string): string => {
+  const baseClass = 'font-medium text-lg text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors';
+  const activeClass = 'border-b-2 border-neutral-900 dark:border-neutral-100';
+  
+  return isRouteActive(routeName) ? `${baseClass} ${activeClass}` : baseClass;
+};
+
+// Business logic
+const toggleMobileMenu = (): void => {
+  showMobileMenu.value = !showMobileMenu.value;
+};
+
+const closeMobileMenu = (): void => {
+  showMobileMenu.value = false;
+};
+
+// Handle escape key to close mobile menu
+const handleEscapeKey = (event: KeyboardEvent): void => {
+  if (event.key === 'Escape' && showMobileMenu.value) {
+    closeMobileMenu();
+  }
+};
+
+// Lifecycle hooks
+onMounted(() => {
+  document.addEventListener('keydown', handleEscapeKey);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscapeKey);
+});
+
+// Expose for testing
+defineExpose({
+  toggleMobileMenu,
+  closeMobileMenu,
+  isRouteActive
+});
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen items-center">
-    <div class="flex w-full h-16 px-4 py-2 justify-end items-center">
-      <div class="sm:hidden text-neutral-900 dark:text-neutral-100">
-        <button @click="showMobileMenu = true" :class="{ 'block': !showMobileMenu, 'hidden': showMobileMenu }"
-          class="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg">
-          <span class="sr-only">Open menu</span>
-          <BurgerIcon class="w-5 h-5"></BurgerIcon>
+    <!-- Header Navigation -->
+    <header class="flex w-full h-16 px-4 py-2 justify-end items-center bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+      <!-- Mobile Menu Toggle -->
+      <div class="sm:hidden">
+        <button 
+          v-if="!showMobileMenu"
+          @click="toggleMobileMenu"
+          class="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+          aria-label="Open navigation menu"
+        >
+          <BurgerIcon class="w-5 h-5" />
         </button>
-        <button @click="showMobileMenu = false" :class="{ 'block': showMobileMenu, 'hidden': !showMobileMenu }"
-          class="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg">
-          <span class="sr-only">Close menu</span>
-          <CloseIcon class="w-6 h-6"></CloseIcon>
+        <button 
+          v-else
+          @click="closeMobileMenu"
+          class="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+          aria-label="Close navigation menu"
+        >
+          <CloseIcon class="w-5 h-5" />
         </button>
       </div>
-      <div class="hidden sm:flex gap-12 justify-end items-center">
-        <RouterLink :to="{ name: 'Search' }"
-          :class="{ 'border-b-2 border-neutral-900 dark:border-neutral-100': router.currentRoute.value.name === 'Search' }"
-          class="font-medium text-lg text-neutral-900 dark:text-neutral-100">
-          Search</RouterLink>
-        <RouterLink :to="{ name: 'WatchList' }"
-          :class="{ 'border-b-2 border-neutral-900 dark:border-neutral-100': router.currentRoute.value.name === 'WatchList' }"
-          class="font-medium text-lg text-neutral-900 dark:text-neutral-100">
-          Watch list</RouterLink>
-        <RouterLink :to="{ name: 'ExtensionList' }"
-          :class="{ 'border-b-2 border-neutral-900 dark:border-neutral-100': router.currentRoute.value.name === 'ExtensionList' }"
-          class="font-medium text-lg text-neutral-900 dark:text-neutral-100">
-          Extensions</RouterLink>
+
+      <!-- Desktop Navigation -->
+      <nav class="hidden sm:flex gap-8 justify-end items-center" role="navigation" aria-label="Main navigation">
+        <RouterLink 
+          v-for="item in navigationItems"
+          :key="item.name"
+          :to="{ name: item.routeName }"
+          :class="getRouteLinkClass(item.routeName)"
+          :aria-current="isRouteActive(item.routeName) ? 'page' : undefined"
+        >
+          {{ item.label }}
+        </RouterLink>
         <DarkModeSwitch />
-      </div>
-    </div>
-    <div class="flex justify-center items-center px-4 py-2 mb-8">
+      </nav>
+    </header>
+
+    <!-- App Title -->
+    <div 
+      v-if="!showMobileMenu"
+      class="flex justify-center items-center px-4 py-6 mb-8"
+    >
       <h1 class="text-3xl font-extrabold text-neutral-900 dark:text-neutral-100">
-        <router-link :to="{ name: 'Search' }">Domain Check</router-link>
+        <RouterLink 
+          :to="{ name: 'Search' }"
+          class="hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+        >
+          Domain Check
+        </RouterLink>
       </h1>
     </div>
-    <main :class="{ 'block': !showMobileMenu, 'hidden': showMobileMenu }"
-      class="flex-1 px-4 py-2 max-w-lg w-full text-neutral-900 dark:text-neutral-100">
-      <slot />
-    </main>
-    <div :class="{ 'block': showMobileMenu, 'hidden': !showMobileMenu }"
-      class="px-4 py-2 flex-1 flex flex-col gap-12 items-center text-neutral-900 dark:text-neutral-100">
-      <RouterLink :to="{ name: 'Search' }"
-        :class="{ 'border-b-2 border-neutral-900 dark:border-neutral-100': router.currentRoute.value.name === 'Search' }"
-        class="font-medium text-lg text-neutral-900 dark:text-neutral-100">
-        Search</RouterLink>
-      <RouterLink :to="{ name: 'WatchList' }"
-        :class="{ 'border-b-2 border-neutral-900 dark:border-neutral-100': router.currentRoute.value.name === 'WatchList' }"
-        class="font-medium text-lg text-neutral-900 dark:text-neutral-100">
-        Watch list</RouterLink>
-      <RouterLink :to="{ name: 'ExtensionList' }"
-        :class="{ 'border-b-2 border-neutral-900 dark:border-neutral-100': router.currentRoute.value.name === 'ExtensionList' }"
-        class="font-medium text-lg text-neutral-900 dark:text-neutral-100">
-        Extensions</RouterLink>
-      <DarkModeSwitch />
+
+    <!-- Mobile Navigation Menu (Full Height) -->
+    <div 
+      v-if="showMobileMenu"
+      class="flex-1 px-4 py-2 flex flex-col gap-12 items-center text-neutral-900 dark:text-neutral-100 sm:hidden"
+    >
+      <nav class="flex flex-col gap-12 items-center mt-12" role="navigation" aria-label="Mobile navigation">
+        <RouterLink 
+          v-for="item in navigationItems"
+          :key="item.name"
+          :to="{ name: item.routeName }"
+          @click="closeMobileMenu"
+          :class="getRouteLinkClass(item.routeName)"
+          :aria-current="isRouteActive(item.routeName) ? 'page' : undefined"
+        >
+          {{ item.label }}
+        </RouterLink>
+        <DarkModeSwitch />
+      </nav>
     </div>
 
-    <footer class="flex w-full h-8 px-4 bg-neutral-200  dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
-      <div class="flex w-full justify-end self-center">
-        <a href="https://github.com/domain-check/domain-check.github.io" target="_blank" class="flex items-center text-sm gap-1">
-          <GithubIcon class="w-5 h-5"></GithubIcon>
-          <div>GitHub</div>
+    <!-- Main Content -->
+    <main 
+      v-if="!showMobileMenu"
+      class="flex-1 px-4 py-2 max-w-lg w-full text-neutral-900 dark:text-neutral-100"
+    >
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="flex w-full h-12 px-4 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
+      <div class="flex w-full justify-end items-center">
+        <a 
+          href="https://github.com/domain-check/domain-check.github.io" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="flex items-center text-sm gap-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+          aria-label="View source code on GitHub"
+        >
+          <GithubIcon class="w-4 h-4" />
+          <span>GitHub</span>
         </a>
       </div>
     </footer>
