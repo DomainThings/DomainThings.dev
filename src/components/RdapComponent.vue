@@ -1,177 +1,195 @@
 <script lang="ts" setup>
+import { computed, onMounted, ref } from 'vue';
 import { fetchRdap } from '@/services/rdapService';
 import type { RdapEvent, RdapResponse } from '@/types/rdap';
-import { onMounted, ref } from 'vue';
 import SpinnerIcon from '@/icons/SpinnerIcon.vue';
 import BaseAlert from './BaseAlert.vue';
 
-const props = defineProps({
-  domain: {
-    type: String,
-    required: true
-  }
-});
+// Types
+interface Props {
+  readonly domain: string;
+}
 
-const rdapResponse = ref<RdapResponse>()
-const rdapError = ref<{ title: string, text?: string } | null>();
+interface RdapError {
+  readonly title: string;
+  readonly text?: string;
+}
+
+// Props
+const props = defineProps<Props>();
+
+// Reactive state
+const rdapResponse = ref<RdapResponse | null>(null);
+const rdapError = ref<RdapError | null>(null);
 const isRdapLoading = ref(false);
 const isResponseShown = ref(false);
 
-onMounted(async () => {
+// Computed properties
+const hasStatus = computed((): boolean => {
+  return Boolean(rdapResponse.value?.status?.length);
+});
+
+const hasEntities = computed((): boolean => {
+  return Boolean(rdapResponse.value?.entities?.length);
+});
+
+const hasEvents = computed((): boolean => {
+  return Boolean(rdapResponse.value?.events?.length);
+});
+
+// Helper function to extract entity name from vCard
+const getEntityName = (entity: any): string => {
+  try {
+    return entity.vcardArray?.[1]?.[1]?.[3] || 'Unknown';
+  } catch {
+    return 'Unknown';
+  }
+};
+
+// Business logic
+const fetchRdapData = async (): Promise<void> => {
   rdapError.value = null;
   isRdapLoading.value = true;
+  
   try {
-    rdapResponse.value = await fetchRdap(props.domain).then((json) => {
-      json.events.sort((a: RdapEvent, b: RdapEvent) => {
+    const response = await fetchRdap(props.domain);
+    
+    // Sort events by date (newest first)
+    if (response.events) {
+      response.events.sort((a: RdapEvent, b: RdapEvent) => {
         return new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime();
       });
-      return json;
-    });
-  } catch (error: any) {
-    console.error(error)
+    }
+    
+    rdapResponse.value = response;
+  } catch (error: unknown) {
+    console.error('RDAP fetch error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     rdapError.value = {
       title: 'RDAP request failed',
-      text: error.message ?? error.toString()
-    }
+      text: errorMessage
+    };
+    rdapResponse.value = null;
   } finally {
     isRdapLoading.value = false;
   }
-})
+};
+
+const toggleResponseVisibility = (): void => {
+  isResponseShown.value = !isResponseShown.value;
+};
+
+// Lifecycle hooks
+onMounted(async () => {
+  await fetchRdapData();
+});
+
+// Expose for testing
+defineExpose({
+  fetchRdapData,
+  toggleResponseVisibility
+});
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    <div v-if="isRdapLoading" class="flex items-center justify-center">
-      <SpinnerIcon class="w-12 h-12 fill-neutral-800 text-neutral-500"></SpinnerIcon>
+  <div class="flex flex-col gap-4">
+    <!-- Loading State -->
+    <div v-if="isRdapLoading" class="flex items-center justify-center py-8">
+      <SpinnerIcon class="w-12 h-12 fill-neutral-800 text-neutral-500" />
     </div>
 
-    <BaseAlert v-if="rdapError" type="error">{{ rdapError.title }}</BaseAlert>
+    <!-- Error State -->
+    <BaseAlert v-if="rdapError" type="error">
+      <template #title>{{ rdapError.title }}</template>
+      <!-- <template v-if="rdapError.text">{{ rdapError.text }}</template> -->
+    </BaseAlert>
 
-    <div v-if="rdapResponse" class="flex flex-col gap-3">
-
-      <div class="flex gap-2">
-        <div>Status:</div>
-        <div class="flex flex-wrap gap-1">
-          <span v-for="(status, index) in rdapResponse.status" :key="index"
-            class="flex items-center gap-1 text-xs px-2 py-1 rounded bg-neutral-700 text-neutral-100 whitespace-nowrap">
+    <!-- RDAP Response Content -->
+    <template v-if="rdapResponse && !isRdapLoading">
+      <!-- Status Section -->
+      <div v-if="hasStatus" class="space-y-2">
+        <h3 class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Status</h3>
+        <div class="flex flex-wrap gap-2">
+          <span 
+            v-for="(status, index) in rdapResponse.status" 
+            :key="index"
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+          >
             {{ status }}
           </span>
         </div>
       </div>
 
-      <hr class="w-full h-px bg-neutral-200 border-0 dark:bg-neutral-700">
-
-      <div class="flex flex-col gap-2">
-        <div>Entities:</div>
-        <div class="flex flex-col gap-2">
-          <div v-for="(entity, index) in rdapResponse.entities" :key="index">
-            <div class="flex justify-between items-start gap-2">
+      <!-- Entities Section -->
+      <div v-if="hasEntities" class="space-y-3">
+        <h3 class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Entities</h3>
+        <div class="space-y-3">
+          <div 
+            v-for="(entity, index) in rdapResponse.entities" 
+            :key="index"
+            class="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700"
+          >
+            <div class="flex justify-between items-start gap-3">
               <div class="flex flex-wrap gap-1">
-                <span v-for="(role, index) in entity.roles" :key="index"
-                  class="flex items-center gap-1 text-xs px-2 py-1 rounded bg-neutral-700 text-neutral-100 whitespace-nowrap">
+                <span 
+                  v-for="(role, roleIndex) in entity.roles" 
+                  :key="roleIndex"
+                  class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200"
+                >
                   {{ role }}
                 </span>
               </div>
-              <div class="font-medium">{{ (entity.vcardArray && entity.vcardArray[1][1] &&
-                entity.vcardArray[1][1][3]) ?
-                entity.vcardArray[1][1][3] :
-                'Unknown' }}
+              <div class="text-right">
+                <div class="font-medium text-neutral-900 dark:text-neutral-100">
+                  {{ getEntityName(entity) }}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <hr class="w-full h-px bg-neutral-200 border-0 dark:bg-neutral-700">
-
-      <div class="flex flex-col gap-2">
-        <div>Events:</div>
-        <div class="flex flex-col gap-2">
-          <div v-for="(event, index) in rdapResponse.events" :key="index">
-            <div class="flex justify-between items-start gap-2">
-              <div class="flex flex-wrap gap-1">
-                <span
-                  class="flex items-center gap-1 text-xs px-2 py-1 rounded bg-neutral-700 text-neutral-100 whitespace-nowrap">
-                  {{ event.eventAction }}
-                </span>
+      <!-- Events Section -->
+      <div v-if="hasEvents" class="space-y-3">
+        <h3 class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Events</h3>
+        <div class="space-y-2">
+          <div 
+            v-for="(event, index) in rdapResponse.events" 
+            :key="index"
+            class="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700"
+          >
+            <div class="flex justify-between items-center gap-3">
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                {{ event.eventAction }}
+              </span>
+              <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                {{ new Date(event.eventDate).toLocaleString() }}
               </div>
-              <div class="font-medium">{{ new Date(event.eventDate).toLocaleString() }}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <hr class="w-full h-px bg-neutral-200 border-0 dark:bg-neutral-700">
-
-      <div>
-        <button v-if="!isResponseShown" @click="isResponseShown = true" class="underline">Show response</button>
-        <button v-else @click="isResponseShown = false" class="underline">Hide response</button>
-        <pre v-if="isResponseShown" class="max-h-[360px] p-3 mt-3 bg-grey-darken-3 overflow-scroll bg-neutral-200 dark:bg-neutral-700">{{ rdapResponse }}</pre>
+      <!-- No Data Message -->
+      <div v-if="!hasStatus && !hasEntities && !hasEvents" class="text-center py-6">
+        <p class="text-neutral-500 dark:text-neutral-400">No RDAP data available for this domain.</p>
       </div>
 
-    </div>
-
-    <!-- <div v-if="rdapResponse">
-
-      <v-row v-if="rdapResponse.events && rdapResponse.events.length > 0">
-        <v-col cols="auto" class="pb-0 pb-sm-3">
-          <v-list-item-subtitle>Events:</v-list-item-subtitle>
-        </v-col>
-        <v-col>
-          <div class="d-flex flex-column ga-2">
-            <div v-for="(event, index) in rdapResponse.events" :key="index" class="flex-1-1">
-              <v-card variant="tonal">
-                <v-card-text class="d-flex align-center justify-space-between">
-                  <div class="d-flex flex-wrap ga-1">
-                    <v-chip size="small">{{ event.eventAction }}</v-chip>
-                  </div>
-                  <div class="d-flex align-center ga-2">
-                    <v-icon>mdi-calendar</v-icon>
-                    <div class="font-weight-medium">{{ event.eventDate }}
-                    </div>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-
-      <v-row v-if="rdapResponse.entities && rdapResponse.entities.length > 0">
-        <v-col cols="auto" class="pb-0 pb-sm-3">
-          <v-list-item-subtitle>Entities:</v-list-item-subtitle>
-        </v-col>
-        <v-col>
-          <div class="d-flex flex-column ga-2">
-            <div v-for="(entity, index) in rdapResponse.entities" :key="index" class="flex-1-1">
-              <v-card variant="tonal">
-                <v-card-text class="d-flex align-center justify-space-between">
-                  <div class="d-flex flex-wrap ga-1">
-                    <v-chip size="small" v-for="(role, index) in entity.roles" :key="index">{{ role }}</v-chip>
-                  </div>
-                  <div class="d-flex align-center ga-2">
-                    <v-icon>mdi-account</v-icon>
-                    <div>
-                      <div class="font-weight-medium">{{ (entity.vcardArray && entity.vcardArray[1][1] &&
-                        entity.vcardArray[1][1][3]) ?
-                        entity.vcardArray[1][1][3] :
-                        'Unknown' }}
-                      </div>
-                    </div>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-      <div class="mt-5">
-        <v-btn v-if="!isResponseShown" @click="isResponseShown = true" block prepend-icon="mdi-code-json"
-          variant="outlined">Show response</v-btn>
-        <v-btn v-else @click="isResponseShown = false" block prepend-icon="mdi-code-json" variant="outlined">Hide
-          response</v-btn>
-        <pre v-if="isResponseShown" class="pa-3 mt-3 bg-grey-darken-3 overflow-auto">{{ rdapResponse }}</pre>
+      <!-- Raw Response Toggle -->
+      <div class="border-t border-neutral-200 dark:border-neutral-700 pt-4">
+        <button 
+          @click="toggleResponseVisibility"
+          class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+        >
+          {{ isResponseShown ? 'Hide Raw Response' : 'Show Raw Response' }}
+        </button>
+        
+        <div v-if="isResponseShown" class="mt-3">
+          <pre 
+            class="max-h-96 p-4 bg-neutral-100 dark:bg-neutral-800 overflow-auto rounded-lg text-xs font-mono text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700"
+          >{{ JSON.stringify(rdapResponse, null, 2) }}</pre>
+        </div>
       </div>
-    </div> -->
+    </template>
   </div>
 </template>
