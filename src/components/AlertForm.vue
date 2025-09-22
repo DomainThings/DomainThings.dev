@@ -22,7 +22,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const { getButtonClasses, getBadgeClasses, getTextClasses } = useTheme();
-const { getSupportInfo, getRecommendations, checkBackgroundSupport } = useBackgroundNotifications();
+const { supportInfo, recommendations, checkBackgroundSupport } = useBackgroundNotifications();
 
 // Form state
 const enabled = ref(props.existingAlert?.enabled ?? true);
@@ -155,10 +155,10 @@ onMounted(() => {
       </h4>
       
       <div class="space-y-2 text-xs">
-        <div v-if="getSupportInfo.backgroundNotifications" class="flex items-center gap-2">
+        <div v-if="supportInfo.backgroundNotifications" class="flex items-center gap-2">
           <BaseBadge variant="success" size="sm">✅ Entièrement supportées</BaseBadge>
         </div>
-        <div v-else-if="getSupportInfo.fallbackMode" class="flex items-center gap-2">
+        <div v-else-if="supportInfo.fallbackMode" class="flex items-center gap-2">
           <BaseBadge variant="warning" size="sm">⚠️ Support partiel</BaseBadge>
         </div>
         <div v-else class="flex items-center gap-2">
@@ -166,8 +166,8 @@ onMounted(() => {
         </div>
         
         <ul :class="[getTextClasses('neutral'), 'text-xs space-y-1 mt-2 opacity-75']">
-          <li v-for="recommendation in getRecommendations" 
-              :key="recommendation" 
+          <li v-for="(recommendation, i) in recommendations" 
+              :key="i" 
               class="flex items-start gap-1">
             <span class="text-gray-400 mt-0.5">•</span>
             <span>{{ recommendation }}</span>
