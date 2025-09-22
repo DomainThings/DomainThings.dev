@@ -7,7 +7,9 @@ export function useServiceWorker() {
   const isServiceWorkerReady = ref(false);
   const serviceWorkerStatus = ref<string>('Initializing...');
 
+  // Stockage des handlers pour un nettoyage approprié
   let messageHandler: ((event: MessageEvent) => void) | null = null;
+  let controllerChangeHandler: (() => void) | null = null;
 
   onMounted(() => {
     if ('serviceWorker' in navigator) {
@@ -19,7 +21,14 @@ export function useServiceWorker() {
         }
       };
 
+      // Listen for SW updates
+      controllerChangeHandler = () => {
+        serviceWorkerStatus.value = 'Service Worker updated';
+      };
+
+      // Ajouter les event listeners
       navigator.serviceWorker.addEventListener('message', messageHandler);
+      navigator.serviceWorker.addEventListener('controllerchange', controllerChangeHandler);
 
       // Check if SW is already active
       navigator.serviceWorker.ready.then((registration) => {
@@ -29,11 +38,7 @@ export function useServiceWorker() {
         }
       }).catch(error => {
         console.error('Service Worker initialization failed:', error);
-      });
-
-      // Listen for SW updates
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        serviceWorkerStatus.value = 'Service Worker updated';
+        serviceWorkerStatus.value = 'Service Worker failed to initialize';
       });
     } else {
       serviceWorkerStatus.value = 'Service Worker not supported';
@@ -42,46 +47,61 @@ export function useServiceWorker() {
   });
 
   onUnmounted(() => {
-    if (messageHandler && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.removeEventListener('message', messageHandler);
+    // Nettoyage approprié de tous les event listeners
+    if ('serviceWorker' in navigator) {
+      if (messageHandler) {
+        navigator.serviceWorker.removeEventListener('message', messageHandler);
+        messageHandler = null;
+      }
+      
+      if (controllerChangeHandler) {
+        navigator.serviceWorker.removeEventListener('controllerchange', controllerChangeHandler);
+        controllerChangeHandler = null;
+      }
     }
   });
 
   /**
    * Send a message to the service worker
    */
-  const sendMessageToSW = async (message: any) => {
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        
-        if (registration.active) {
-          registration.active.postMessage(message);
-        } else if (registration.waiting) {
-          registration.waiting.postMessage(message);
-        } else if (registration.installing) {
-          registration.installing.postMessage(message);
-        } else {
-          console.error('No Service Worker available to send message to');
-        }
-      } catch (error) {
-        console.error('Error sending message to Service Worker:', error);
-      }
-    } else {
+  const sendMessageToSW = async (message: any): Promise<void> => {
+    if (!('serviceWorker' in navigator)) {
       console.error('Service Worker not supported');
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      
+      if (registration.active) {
+        registration.active.postMessage(message);
+      } else if (registration.waiting) {
+        registration.waiting.postMessage(message);
+      } else if (registration.installing) {
+        registration.installing.postMessage(message);
+      } else {
+        console.error('No Service Worker available to send message to');
+      }
+    } catch (error) {
+      console.error('Error sending message to Service Worker:', error);
     }
   };
 
   /**
    * Test notification via service worker
    */
-  const testNotification = async () => {
+  const testNotification = async (): Promise<void> => {
     if (!isServiceWorkerReady.value) {
       console.warn('Service Worker not ready yet');
       return;
     }
 
     // Check notification permission
+    if (!('Notification' in window)) {
+      console.error('Notifications not supported');
+      return;
+    }
+
     if (Notification.permission !== 'granted') {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
