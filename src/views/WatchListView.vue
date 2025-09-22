@@ -138,9 +138,7 @@ watch(searchQuery, () => {
         <p class="text-sm">
           <span v-if="searchQuery.trim()">
             No bookmarked domains match "{{ searchQuery.trim() }}". 
-            <button @click="clearSearch" :class="[getIconClasses('primary', { 
-              'hover:underline': true 
-            })]">Clear search</button>
+            <button @click="clearSearch" :class="[getIconClasses('primary'), 'hover:underline']">Clear search</button>
           </span>
           <span v-else>
             You haven't bookmarked any domains yet.

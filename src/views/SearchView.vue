@@ -28,14 +28,6 @@ const searchStore = useSearchStore();
 // Theme composable
 const { getIconClasses, getBadgeClasses } = useTheme();
 
-// Constants
-const DOMAINS_PER_LOAD = 20;
-const SCROLL_THRESHOLD = 32;
-
-// Router and store
-const route = useRoute();
-const searchStore = useSearchStore();
-
 // Reactive state
 const isFormValid = ref(false);
 const isSubmitted = ref(false);
