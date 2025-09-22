@@ -15,7 +15,7 @@
  * const alert = await alertService.saveAlert({
  *   domain: 'example.com',
  *   enabled: true,
- *   daysBeforeExpiration: 30,
+ *   alertDate: new Date('2025-12-01'),
  *   reminderFrequency: 'weekly',
  *   expirationDate: new Date('2025-12-31')
  * });
@@ -45,7 +45,7 @@ export interface AlertSettings {
   readonly id: string;
   readonly domain: string;
   readonly enabled: boolean;
-  readonly daysBeforeExpiration: number;
+  readonly alertDate: Date;
   readonly reminderFrequency: ReminderFrequency;
   readonly expirationDate: Date;
   readonly createdAt: Date;
@@ -202,9 +202,9 @@ const validateAlertInput = (input: CreateAlertInput): void => {
     );
   }
 
-  if (!Number.isInteger(input.daysBeforeExpiration) || input.daysBeforeExpiration < 1 || input.daysBeforeExpiration > 365) {
+  if (!(input.alertDate instanceof Date) || isNaN(input.alertDate.getTime())) {
     throw new AlertServiceError(
-      'Days before expiration must be an integer between 1 and 365',
+      'Alert date must be a valid Date object',
       AlertServiceErrorCode.INVALID_INPUT
     );
   }
@@ -219,13 +219,6 @@ const validateAlertInput = (input: CreateAlertInput): void => {
   if (!(input.expirationDate instanceof Date) || isNaN(input.expirationDate.getTime())) {
     throw new AlertServiceError(
       'Expiration date must be a valid Date object',
-      AlertServiceErrorCode.INVALID_INPUT
-    );
-  }
-
-  if (input.expirationDate <= new Date()) {
-    throw new AlertServiceError(
-      'Expiration date must be in the future',
       AlertServiceErrorCode.INVALID_INPUT
     );
   }
@@ -456,7 +449,7 @@ class AlertService {
    * const alert = await alertService.saveAlert({
    *   domain: 'example.com',
    *   enabled: true,
-   *   daysBeforeExpiration: 30,
+   *   alertDate: new Date('2025-12-01'),
    *   reminderFrequency: 'weekly',
    *   expirationDate: new Date('2025-12-31')
    * });
@@ -484,7 +477,7 @@ class AlertService {
         id: alert.id,
         domain: alert.domain,
         enabled: alert.enabled,
-        daysBeforeExpiration: alert.daysBeforeExpiration,
+        alertDate: alert.alertDate.toISOString(),
         reminderFrequency: alert.reminderFrequency,
         expirationDate: alert.expirationDate.toISOString(),
         createdAt: alert.createdAt.toISOString(),
@@ -633,7 +626,7 @@ class AlertService {
    * ```typescript
    * const alert = await alertService.getAlertByDomain('example.com');
    * if (alert) {
-   *   console.log('Alert found:', alert.daysBeforeExpiration);
+   *   console.log('Alert found:', alert.alertDate);
    * }
    * ```
    */
@@ -801,7 +794,7 @@ class AlertService {
       id: record.id,
       domain: record.domain,
       enabled: record.enabled,
-      daysBeforeExpiration: record.daysBeforeExpiration,
+      alertDate: new Date(record.alertDate),
       reminderFrequency: record.reminderFrequency,
       expirationDate: new Date(record.expirationDate),
       createdAt: new Date(record.createdAt),
@@ -831,86 +824,6 @@ class AlertService {
       }
     } catch (error) {
       console.error('Failed to load alerts from database:', error);
-      
-      // Fallback: try to migrate legacy data
-      await this.migrateLegacyAlerts();
-    }
-  }
-
-  /**
-   * Migrate alerts from legacy localStorage format
-   */
-  private async migrateLegacyAlerts(): Promise<void> {
-    try {
-      const stored = localStorage.getItem(ALERT_SERVICE_CONFIG.legacyStorageKey);
-      
-      if (!stored) {
-        console.debug('No legacy alerts found for migration');
-        return;
-      }
-
-      const alertsArray = JSON.parse(stored);
-      
-      if (!Array.isArray(alertsArray)) {
-        console.warn('Invalid legacy alerts format, skipping migration');
-        return;
-      }
-
-      let migratedCount = 0;
-      
-      for (const alertData of alertsArray) {
-        try {
-          const alert: AlertSettings = {
-            id: alertData.id || generateAlertId(alertData.domain),
-            domain: alertData.domain,
-            enabled: Boolean(alertData.enabled),
-            daysBeforeExpiration: Number(alertData.daysBeforeExpiration) || 30,
-            reminderFrequency: alertData.reminderFrequency || 'weekly',
-            expirationDate: new Date(alertData.expirationDate),
-            createdAt: new Date(alertData.createdAt || Date.now()),
-            lastNotified: alertData.lastNotified ? new Date(alertData.lastNotified) : undefined
-          };
-          
-          // Validate migrated data
-          if (!isValidDomain(alert.domain) || isNaN(alert.expirationDate.getTime())) {
-            console.warn('Skipping invalid legacy alert:', alertData);
-            continue;
-          }
-          
-          // Save to database
-          const alertRecord: db.AlertRecord = {
-            id: alert.id,
-            domain: alert.domain,
-            enabled: alert.enabled,
-            daysBeforeExpiration: alert.daysBeforeExpiration,
-            reminderFrequency: alert.reminderFrequency,
-            expirationDate: alert.expirationDate.toISOString(),
-            createdAt: alert.createdAt.toISOString(),
-            lastNotified: alert.lastNotified?.toISOString()
-          };
-          
-          const result = await db.saveAlert(alertRecord);
-          
-          if (result.success) {
-            this.alerts.set(alert.id, alert);
-            migratedCount++;
-          }
-          
-        } catch (error) {
-          console.error('Failed to migrate individual alert:', error);
-        }
-      }
-      
-      if (migratedCount > 0) {
-        // Remove legacy data after successful migration
-        localStorage.removeItem(ALERT_SERVICE_CONFIG.legacyStorageKey);
-        console.info(`Successfully migrated ${migratedCount} alerts from localStorage`);
-        
-        await this.syncAlertsToServiceWorker();
-      }
-      
-    } catch (error) {
-      console.error('Legacy alert migration failed:', error);
     }
   }
 }

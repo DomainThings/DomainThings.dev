@@ -30,10 +30,8 @@ const enabled = ref(props.existingAlert?.enabled ?? true);
 // Calculate default alert date (expiration date or existing alert date)
 const getDefaultAlertDate = (): string => {
   if (props.existingAlert) {
-    // If existing alert, calculate the alert date from the existing settings
-    const alertDate = new Date(props.expirationDate);
-    alertDate.setDate(alertDate.getDate() - props.existingAlert.daysBeforeExpiration);
-    return formatDateForInput(alertDate);
+    // If existing alert, use the existing alert date directly
+    return formatDateForInput(new Date(props.existingAlert.alertDate));
   } else {
     // Default: expiration date
     return formatDateForInput(props.expirationDate);
@@ -53,7 +51,7 @@ const alertDate = ref(getDefaultAlertDate());
 // Computed
 const isNewAlert = computed(() => !props.existingAlert);
 const formattedExpirationDate = computed(() => {
-  return props.expirationDate.toLocaleDateString('fr-FR', {
+  return props.expirationDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -66,6 +64,7 @@ const daysBeforeExpiration = computed(() => {
   const expirationDateTime = new Date(props.expirationDate);
   const diffTime = expirationDateTime.getTime() - selectedDate.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
   return Math.max(0, diffDays);
 });
 
@@ -73,7 +72,7 @@ const daysBeforeExpiration = computed(() => {
 const handleSave = () => {
   const alertSettings = {
     enabled: enabled.value,
-    daysBeforeExpiration: daysBeforeExpiration.value,
+    alertDate: new Date(alertDate.value),
     reminderFrequency: 'once' as const,
     domain: props.domain,
     expirationDate: props.expirationDate
@@ -112,10 +111,10 @@ onMounted(() => {
     <!-- Header Info -->
     <div class="space-y-2">
       <h3 :class="[getTextClasses('neutral'), 'text-lg font-semibold']">
-        Alerte d'expiration pour {{ domain }}
+        Expiration Alert for {{ domain }}
       </h3>
       <div :class="[getTextClasses('neutral'), 'text-sm']">
-        <p>Domaine expire le : <strong>{{ formattedExpirationDate }}</strong></p>
+        <p>Domain expires on: <strong>{{ formattedExpirationDate }}</strong></p>
       </div>
     </div>
 
@@ -124,16 +123,16 @@ onMounted(() => {
          class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
       <div class="flex items-center justify-between gap-4">
         <div>
-          <h4 :class="[getTextClasses('warning'), 'font-medium']">Autorisation requise</h4>
+          <h4 :class="[getTextClasses('warning'), 'font-medium']">Permission Required</h4>
           <p :class="[getTextClasses('neutral'), 'text-sm mt-1']">
-            Autorisez les notifications pour recevoir les alertes d'expiration.
+            Allow notifications to receive expiration alerts.
           </p>
         </div>
         <BaseButton 
           @click="requestNotificationPermission"
           variant="warning"
           size="sm">
-          Autoriser
+          Allow
         </BaseButton>
       </div>
     </div>
@@ -141,9 +140,9 @@ onMounted(() => {
     <!-- Alert not supported -->
     <div v-else-if="!isNotificationSupported"
          class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-      <h4 :class="[getTextClasses('error'), 'font-medium']">Notifications non supportées</h4>
+      <h4 :class="[getTextClasses('error'), 'font-medium']">Notifications Not Supported</h4>
       <p :class="[getTextClasses('neutral'), 'text-sm mt-1']">
-        Votre navigateur ne supporte pas les notifications push.
+        Your browser does not support push notifications.
       </p>
     </div>
 
@@ -151,18 +150,18 @@ onMounted(() => {
     <div v-if="notificationPermission === 'granted'" 
          class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
       <h4 :class="[getTextClasses('neutral'), 'font-medium text-sm mb-2']">
-        🔔 Notifications en arrière-plan
+        🔔 Background Notifications
       </h4>
       
       <div class="space-y-2 text-xs">
         <div v-if="supportInfo.backgroundNotifications" class="flex items-center gap-2">
-          <BaseBadge variant="success" size="sm">✅ Entièrement supportées</BaseBadge>
+          <BaseBadge variant="success" size="sm">✅ Fully Supported</BaseBadge>
         </div>
         <div v-else-if="supportInfo.fallbackMode" class="flex items-center gap-2">
-          <BaseBadge variant="warning" size="sm">⚠️ Support partiel</BaseBadge>
+          <BaseBadge variant="warning" size="sm">⚠️ Partial Support</BaseBadge>
         </div>
         <div v-else class="flex items-center gap-2">
-          <BaseBadge variant="error" size="sm">❌ Non supportées</BaseBadge>
+          <BaseBadge variant="error" size="sm">❌ Not Supported</BaseBadge>
         </div>
         
         <ul :class="[getTextClasses('neutral'), 'text-xs space-y-1 mt-2 opacity-75']">
@@ -170,7 +169,7 @@ onMounted(() => {
               :key="i" 
               class="flex items-start gap-1">
             <span class="text-gray-400 mt-0.5">•</span>
-            <span>{{ recommendation }}</span>
+            <span>{{ recommendation.message }}</span>
           </li>
         </ul>
       </div>
@@ -181,7 +180,7 @@ onMounted(() => {
       <!-- Enable/Disable Toggle -->
       <div class="flex items-center justify-between">
         <label :class="[getTextClasses('neutral'), 'font-medium']" for="alert-enabled">
-          Activer l'alerte
+          Enable Alert
         </label>
         <input 
           id="alert-enabled"
@@ -194,14 +193,18 @@ onMounted(() => {
         <!-- Alert Date Selection -->
         <div>
           <label :class="[getTextClasses('neutral'), 'block text-sm font-medium mb-2']" for="alert-date">
-            Date d'alerte
+            Alert Date
           </label>
           <input 
             id="alert-date"
             v-model="alertDate"
             type="date"
-            :max="formatDateForInput(props.expirationDate)"
             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          <p :class="[getTextClasses('neutral'), 'text-xs mt-1 opacity-75']">
+            <span v-if="daysBeforeExpiration === 0">Alert on expiration date</span>
+            <span v-else-if="daysBeforeExpiration === 1">Alert 1 day before expiration</span>
+            <span v-else>Alert {{ daysBeforeExpiration }} days before expiration</span>
+          </p>
         </div>
       </div>
     </form>
@@ -214,7 +217,7 @@ onMounted(() => {
           @click="handleDelete"
           variant="error"
           size="sm">
-          Supprimer l'alerte
+          Delete Alert
         </BaseButton>
       </div>
       
@@ -223,14 +226,14 @@ onMounted(() => {
           @click="handleClose"
           variant="neutral"
           size="sm">
-          Annuler
+          Cancel
         </BaseButton>
         <BaseButton 
           @click="handleSave"
           variant="primary"
           size="sm"
           :disabled="!isNotificationSupported || (isNotificationSupported && notificationPermission !== 'granted')">
-          {{ isNewAlert ? 'Créer l\'alerte' : 'Modifier l\'alerte' }}
+          {{ isNewAlert ? 'Create Alert' : 'Update Alert' }}
         </BaseButton>
       </div>
     </div>

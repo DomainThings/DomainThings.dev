@@ -57,7 +57,7 @@ interface AlertRecord {
   readonly id: string;
   readonly domain: string;
   readonly enabled: boolean;
-  readonly daysBeforeExpiration: number;
+  readonly alertDate: string; // ISO string
   readonly reminderFrequency: 'once' | 'daily' | 'weekly';
   readonly expirationDate: string; // ISO string
   readonly createdAt: string; // ISO string
