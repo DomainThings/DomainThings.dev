@@ -5,6 +5,7 @@ import { fetchDns } from '@/services/dnsService';
 import SpinnerIcon from '@/icons/SpinnerIcon.vue';
 import BaseAlert from './BaseAlert.vue';
 import ArrowDownIcon from '@/icons/ArrowDownIcon.vue';
+import { useTheme } from '@/composables/useTheme';
 
 // Types
 interface Props {
@@ -23,6 +24,9 @@ interface DnsTypeOption {
 
 // Props
 const props = defineProps<Props>();
+
+// Theme composable
+const { getBadgeClasses, getIconClasses } = useTheme();
 
 // Reactive state
 const dnsResponse = ref<DnsJsonResponse | null>(null);
@@ -46,16 +50,16 @@ const hasAnswers = computed((): boolean => {
   return Boolean(dnsResponse.value?.Answer?.length);
 });
 
-const statusBadgeClass = computed((): string => {
-  if (!dnsResponse.value) return '';
+const statusVariant = computed(() => {
+  if (!dnsResponse.value) return 'neutral';
   
   const status = dnsResponse.value.Status;
   if (status === DnsResponseStatus.NOERROR) {
-    return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+    return 'success';
   } else if (status === DnsResponseStatus.NXDOMAIN) {
-    return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+    return 'error';
   }
-  return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+  return 'warning';
 });
 
 // Lifecycle hooks
@@ -112,7 +116,7 @@ defineExpose({
   <div class="flex flex-col gap-4">
     <!-- Loading State -->
     <div v-if="isDnsLoading" class="flex items-center justify-center py-8">
-      <SpinnerIcon class="w-12 h-12 fill-neutral-800 text-neutral-500" />
+      <SpinnerIcon :class="[getIconClasses('info'), 'w-12 h-12']" />
     </div>
 
     <!-- Error State -->
@@ -127,8 +131,7 @@ defineExpose({
       <div class="flex items-center gap-2">
         <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Status:</span>
         <span 
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-          :class="statusBadgeClass"
+          :class="getBadgeClasses(statusVariant)"
         >
           {{ DnsResponseStatus[dnsResponse.Status] }}
         </span>
@@ -143,16 +146,13 @@ defineExpose({
           <select 
             id="dns-type-select"
             v-model="dnsType"
-            class="block w-full p-2.5 pr-8 appearance-none row-start-1 col-start-1 text-sm rounded-lg border bg-neutral-100 border-neutral-300 text-neutral-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+            class="block w-full p-2.5 pr-8 appearance-none row-start-1 col-start-1 text-sm rounded-lg border bg-neutral-100 border-neutral-300 text-neutral-900 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none cursor-pointer"
           >
             <option v-for="type in dnsTypes" :key="type.value" :value="type.value">
               {{ type.title }}
             </option>
           </select>
-          <ArrowDownIcon 
-            class="w-5 h-5 row-start-1 col-start-1 self-center justify-self-end mr-2 pointer-events-none text-neutral-500" 
-            aria-hidden="true"
-          />
+          <ArrowDownIcon :class="[getIconClasses('neutral'), 'w-5 h-5 row-start-1 col-start-1 self-center justify-self-end mr-2 pointer-events-none']" aria-hidden="true" />
         </div>
       </div>
 
@@ -203,7 +203,7 @@ defineExpose({
       <div class="border-t border-neutral-200 dark:border-neutral-700 pt-4">
         <button 
           @click="toggleResponseVisibility"
-          class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+          :class="[getIconClasses('primary'), 'hover:underline text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 rounded']"
         >
           {{ isResponseShown ? 'Hide Raw Response' : 'Show Raw Response' }}
         </button>

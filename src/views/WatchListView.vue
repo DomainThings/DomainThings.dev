@@ -8,6 +8,9 @@ import CloseIcon from '@/icons/CloseIcon.vue';
 import type { Domain } from '@/types';
 import { getDb } from '@/services/dbService';
 import { useRoute, useRouter } from 'vue-router';
+import { useTheme } from '@/composables/useTheme';
+
+const { getIconClasses } = useTheme();
 
 // Router & Route
 const route = useRoute();
@@ -83,7 +86,7 @@ watch(searchQuery, () => {
       <form @submit.prevent autocomplete="off" class="flex flex-col gap-3">
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-            <SearchIcon class="w-5 h-5 text-neutral-900 dark:text-neutral-100"></SearchIcon>
+            <SearchIcon :class="[getIconClasses('neutral'), 'w-5 h-5']"></SearchIcon>
           </div>
           <input 
             type="text" 
@@ -96,7 +99,7 @@ watch(searchQuery, () => {
             type="button"
             class="absolute inset-y-0 end-0 flex items-center pe-3.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
             :aria-label="'Clear search'">
-            <CloseIcon class="w-5 h-5" />
+            <CloseIcon :class="[getIconClasses('neutral'), 'w-5 h-5']" />
           </button>
         </div>
       </form>
@@ -116,7 +119,7 @@ watch(searchQuery, () => {
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center">
-      <SpinnerIcon class="w-12 h-12 fill-neutral-800 text-neutral-500"></SpinnerIcon>
+      <SpinnerIcon :class="[getIconClasses('neutral'), 'w-12 h-12']"></SpinnerIcon>
     </div>
     
     <!-- Bookmarks List -->
@@ -135,7 +138,9 @@ watch(searchQuery, () => {
         <p class="text-sm">
           <span v-if="searchQuery.trim()">
             No bookmarked domains match "{{ searchQuery.trim() }}". 
-            <button @click="clearSearch" class="text-blue-600 dark:text-blue-400 hover:underline">Clear search</button>
+            <button @click="clearSearch" :class="[getIconClasses('primary', { 
+              'hover:underline': true 
+            })]">Clear search</button>
           </span>
           <span v-else>
             You haven't bookmarked any domains yet.

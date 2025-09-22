@@ -1,8 +1,8 @@
 <template>
   <svg
+    :class="class"
     viewBox="0 0 20 20"
     fill="currentColor"
-    class="w-5 h-5"
     aria-hidden="true"
   >
     <path
@@ -14,5 +14,11 @@
 </template>
 
 <script setup lang="ts">
-// No script needed for this simple icon component
+// Types
+interface Props {
+  readonly class?: string | string[];
+}
+
+// Props
+defineProps<Props>();
 </script>

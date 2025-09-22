@@ -10,11 +10,23 @@ import CloseIcon from '@/icons/CloseIcon.vue';
 import { useSearchStore } from '@/stores/searchStore';
 import { getTlds } from '@/services/rdapService';
 import { getDb } from '@/services/dbService';
+import { useTheme } from '@/composables/useTheme';
 
 // Types
 interface BookmarkedTld {
   readonly tld: string;
 }
+
+// Constants
+const DOMAINS_PER_LOAD = 20;
+const SCROLL_THRESHOLD = 32;
+
+// Router and store
+const route = useRoute();
+const searchStore = useSearchStore();
+
+// Theme composable
+const { getIconClasses, getBadgeClasses } = useTheme();
 
 // Constants
 const DOMAINS_PER_LOAD = 20;
@@ -255,7 +267,7 @@ watch(() => route.query.q, () => {
         <!-- Search Input -->
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-            <SearchIcon class="w-5 h-5 text-neutral-900 dark:text-neutral-100"></SearchIcon>
+            <SearchIcon :class="[getIconClasses('neutral'), 'w-5 h-5']"></SearchIcon>
           </div>
           <input 
             type="text" 
@@ -267,9 +279,9 @@ watch(() => route.query.q, () => {
             v-if="q.trim()"
             @click="clearSearch"
             type="button"
-            class="absolute inset-y-0 end-0 flex items-center pe-3.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+            class="absolute inset-y-0 end-0 flex items-center pe-3.5 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
             :aria-label="'Clear search'">
-            <CloseIcon class="w-5 h-5" />
+            <CloseIcon :class="[getIconClasses('neutral'), 'w-5 h-5']" />
           </button>
         </div>
         
@@ -278,7 +290,7 @@ watch(() => route.query.q, () => {
           <input type="checkbox" v-model="showAllTlds" class="sr-only peer">
           <div class="relative w-8 h-4 bg-neutral-200 rounded-full dark:bg-neutral-700 after:content-[''] after:absolute after:top-[0px] after:start-[0px] after:bg-neutral-100 after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-neutral-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-neutral-100 peer-checked:bg-neutral-600 dark:peer-checked:bg-neutral-600">
           </div>
-          <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show all extensions</span>
+          <span class="ms-3 text-sm font-medium text-neutral-900 dark:text-neutral-300">Show all extensions</span>
         </label>
       </form>
       
@@ -296,7 +308,7 @@ watch(() => route.query.q, () => {
       <!-- Welcome Message -->
       <div v-else-if="showWelcomeMessage" class="flex flex-col items-center justify-center py-12 text-center">
         <div class="text-neutral-500 dark:text-neutral-400">
-          <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
+          <SearchIcon :class="[getIconClasses('neutral'), 'w-12 h-12 mx-auto mb-3 opacity-50']"></SearchIcon>
           <h3 class="text-lg font-medium mb-1">Search for domains</h3>
           <p class="text-sm mb-4">
             Check domain availability across extensions.<br>
@@ -311,19 +323,19 @@ watch(() => route.query.q, () => {
             <div class="flex flex-wrap gap-2 justify-center">
               <button
                 @click="searchWithBookmarks('example')"
-                class="px-3 py-1.5 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                :class="[getBadgeClasses('info'), 'hover:bg-info-200 dark:hover:bg-info-800 transition-colors']"
               >
                 Search "example"
               </button>
               <button
                 @click="searchWithBookmarks('test')"
-                class="px-3 py-1.5 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded-full hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                :class="[getBadgeClasses('success'), 'hover:bg-success-200 dark:hover:bg-success-800 transition-colors']"
               >
                 Search "test"
               </button>
               <button
                 @click="searchWithBookmarks('demo')"
-                class="px-3 py-1.5 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                :class="[getBadgeClasses('primary'), 'hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors']"
               >
                 Search "demo"
               </button>
@@ -335,7 +347,7 @@ watch(() => route.query.q, () => {
       <!-- Invalid Domain Message -->
       <div v-else-if="showInvalidMessage" class="flex flex-col items-center justify-center py-12 text-center">
         <div class="text-neutral-500 dark:text-neutral-400">
-          <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
+          <SearchIcon :class="[getIconClasses('neutral'), 'w-12 h-12 mx-auto mb-3 opacity-50']"></SearchIcon>
           <h3 class="text-lg font-medium mb-1">Invalid domain format</h3>
           <p class="text-sm">
             <span v-if="q.includes('..')">
@@ -354,7 +366,7 @@ watch(() => route.query.q, () => {
               Please enter a valid domain name (e.g., "example" or "example.com").
             </span>
             <br>
-            <button @click="clearSearch" class="text-blue-600 dark:text-blue-400 hover:underline mt-1">Clear and try again</button>
+            <button @click="clearSearch" :class="[getIconClasses('info'), 'hover:underline mt-1']">Clear and try again</button>
           </p>
         </div>
       </div>
@@ -362,12 +374,12 @@ watch(() => route.query.q, () => {
       <!-- No Results Message -->
       <div v-else-if="showNoResultsMessage" class="flex flex-col items-center justify-center py-12 text-center">
         <div class="text-neutral-500 dark:text-neutral-400">
-          <SearchIcon class="w-12 h-12 mx-auto mb-3 opacity-50"></SearchIcon>
+          <SearchIcon :class="[getIconClasses('neutral'), 'w-12 h-12 mx-auto mb-3 opacity-50']"></SearchIcon>
           <h3 class="text-lg font-medium mb-1">No domains to show</h3>
           <p class="text-sm">
             <span v-if="!showAllTlds && bookmarkedTlds.length === 0">
               You haven't bookmarked any extensions yet. 
-              <button @click="showAllTlds = true" class="text-blue-600 dark:text-blue-400 hover:underline">Show all extensions</button>
+              <button @click="showAllTlds = true" :class="[getIconClasses('primary'), 'hover:underline']">Show all extensions</button>
               or visit the extensions page to bookmark some.
             </span>
             <span v-else>

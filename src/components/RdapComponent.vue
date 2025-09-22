@@ -4,6 +4,9 @@ import { fetchRdap } from '@/services/rdapService';
 import type { RdapEvent, RdapResponse } from '@/types/rdap';
 import SpinnerIcon from '@/icons/SpinnerIcon.vue';
 import BaseAlert from './BaseAlert.vue';
+import { useTheme } from '@/composables/useTheme';
+
+const { getIconClasses, getBadgeClasses } = useTheme();
 
 // Types
 interface Props {
@@ -111,7 +114,7 @@ defineExpose({
   <div class="flex flex-col gap-4">
     <!-- Loading State -->
     <div v-if="isRdapLoading" class="flex items-center justify-center py-8">
-      <SpinnerIcon class="w-12 h-12 fill-neutral-800 text-neutral-500" />
+            <SpinnerIcon :class="[getIconClasses('neutral'), 'w-12 h-12']" />
     </div>
 
     <!-- Error State -->
@@ -129,7 +132,7 @@ defineExpose({
           <span 
             v-for="(status, index) in rdapResponse.status" 
             :key="index"
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+            :class="getBadgeClasses('info')"
           >
             {{ status }}
           </span>
@@ -150,7 +153,7 @@ defineExpose({
                 <span 
                   v-for="(role, roleIndex) in entity.roles" 
                   :key="roleIndex"
-                  class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200"
+                  :class="getBadgeClasses('neutral')"
                 >
                   {{ role }}
                 </span>
@@ -175,7 +178,7 @@ defineExpose({
             class="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700"
           >
             <div class="flex justify-between items-center gap-3">
-              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+              <span :class="getBadgeClasses('success')">
                 {{ event.eventAction }}
               </span>
               <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
@@ -195,7 +198,7 @@ defineExpose({
       <div class="border-t border-neutral-200 dark:border-neutral-700 pt-4">
         <button 
           @click="toggleResponseVisibility"
-          class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+          :class="[getIconClasses('primary'), 'hover:underline text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 rounded']"
         >
           {{ isResponseShown ? 'Hide Raw Response' : 'Show Raw Response' }}
         </button>

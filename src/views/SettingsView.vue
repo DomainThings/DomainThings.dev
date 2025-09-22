@@ -6,24 +6,24 @@
     
     <div class="settings-view space-y-6">
       <!-- Header -->
-      <div class="text-center pb-4 border-b border-gray-200 dark:border-gray-700">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+      <div class="text-center pb-4 border-b border-neutral-200 dark:border-neutral-700">
+        <p class="text-sm text-neutral-600 dark:text-neutral-400">
           Gérez vos préférences et les données de l'application
         </p>
       </div>
 
       <!-- Appearance Section -->
       <section class="space-y-3">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">
           Apparence
         </h2>
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div class="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">
+              <h3 class="font-medium text-neutral-900 dark:text-white">
                 Mode sombre
               </h3>
-              <p class="text-xs text-gray-600 dark:text-gray-400">
+              <p class="text-xs text-neutral-600 dark:text-neutral-400">
                 Basculer entre le mode clair et sombre
               </p>
             </div>
@@ -34,18 +34,18 @@
 
       <!-- Data Management Section -->
       <section class="space-y-3">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">
           Gestion des données
         </h2>
         
         <!-- Storage Info -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div class="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">
+              <h3 class="font-medium text-neutral-900 dark:text-white">
                 Stockage local
               </h3>
-              <p class="text-xs text-gray-600 dark:text-gray-400">
+              <p class="text-xs text-neutral-600 dark:text-neutral-400">
                 Gérer les données stockées localement
               </p>
             </div>
@@ -61,16 +61,16 @@
 
       <!-- Search Settings -->
       <section class="space-y-3">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">
           Recherche
         </h2>
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 space-y-3">
+        <div class="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700 space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">
+              <h3 class="font-medium text-neutral-900 dark:text-white">
                 Historique des recherches
               </h3>
-              <p class="text-xs text-gray-600 dark:text-gray-400">
+              <p class="text-xs text-neutral-600 dark:text-neutral-400">
                 Conserver l'historique des recherches
               </p>
             </div>
@@ -86,11 +86,11 @@
 
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">
-                Suggestions automatiques
+                            <h3 class="font-medium text-neutral-900 dark:text-white">
+                Suggestions
               </h3>
-              <p class="text-xs text-gray-600 dark:text-gray-400">
-                Afficher des suggestions pendant la saisie
+              <p class="text-xs text-neutral-600 dark:text-neutral-400">
+                Afficher les suggestions de domaines
               </p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
@@ -107,18 +107,18 @@
 
       <!-- About Section -->
       <section class="space-y-3">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">
           À propos
         </h2>
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div class="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
           <div class="space-y-1">
-            <p class="text-xs text-gray-600 dark:text-gray-400">
+            <p class="text-xs text-neutral-600 dark:text-neutral-400">
               <span class="font-medium">Version :</span> {{ version }}
             </p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">
+            <p class="text-xs text-neutral-600 dark:text-neutral-400">
               <span class="font-medium">Base de données :</span> {{ dbVersion }}
             </p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">
+            <p class="text-xs text-neutral-600 dark:text-neutral-400">
               <span class="font-medium">Dernière mise à jour :</span> {{ lastUpdate }}
             </p>
           </div>
@@ -133,6 +133,9 @@ import { ref, onMounted } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import DarkModeSwitch from '@/components/DarkModeSwitch.vue'
 import { clearAllData } from '@/services/dbService'
+import { useTheme } from '@/composables/useTheme'
+
+const { getButtonClasses } = useTheme()
 
 // Reactive data
 const keepSearchHistory = ref(true)

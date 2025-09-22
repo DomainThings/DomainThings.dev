@@ -13,6 +13,7 @@ import SpinnerIcon from '@/icons/SpinnerIcon.vue';
 import BaseModal from './BaseModal.vue';
 import { getDb } from '@/services/dbService';
 import OpenIcon from '@/icons/OpenIcon.vue';
+import { useTheme } from '@/composables/useTheme';
 
 // Constants
 const CLOUDFLARE_REGISTER_URL = 'https://domains.cloudflare.com/?domain=';
@@ -66,6 +67,9 @@ const domainInfo = ref<Domain | null>(null);
 // Modal states
 const showDnsModal = ref(false);
 const showRdapModal = ref(false);
+
+// Theme composable
+const { getBadgeClasses, getButtonClasses, getIconClasses, getTextClasses } = useTheme();
 
 // Debounce timer
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -228,13 +232,12 @@ watch(() => props.domainName, () => {
     <div class="flex items-center gap-2">
       <button @click="toggleBookmark()" type="button"
         :disabled="isLoadingBookmark"
-        class="cursor-pointer text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        :class="{ '!text-yellow-500 !dark:text-yellow-500': isBookmarked }"
+        :class="[isBookmarked ? '!text-yellow-500 !dark:text-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed' : '', getButtonClasses('neutral', true, false)]"
         :aria-label="isBookmarked ? 'Remove from bookmarks' : 'Add to bookmarks'">
         <StarIcon class="w-5 h-5"></StarIcon>
       </button>
       <a target="blank" :href="domain.getFullUrl()"
-        class="text-xl font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 flex items-end leading-3.5 gap-1"
+        :class="['text-xl font-medium flex items-end leading-3.5 gap-1', getTextClasses('neutral')]"
         :aria-label="`Visit ${domain.name}`">
         {{ domain.name }} 
         <OpenIcon class="w-3 h-3"></OpenIcon>
@@ -244,12 +247,12 @@ watch(() => props.domainName, () => {
     <div class="flex justify-between items-center gap-2 flex-1">
       <div class="flex items-center gap-1">
         <button @click="showDnsModal = true" type="button"
-          class="cursor-pointer rounded-lg text-xs px-1 py-1 text-neutral-900 bg-neutral-100 border border-neutral-300 focus:outline-none hover:bg-neutral-100 focus:ring-4 focus:ring-gray-100 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700"
+          :class="getButtonClasses('neutral', true)"
           :aria-label="`View DNS information for ${domain.name}`">
           DNS
         </button>
         <button @click="showRdapModal = true" type="button"
-          class="cursor-pointer rounded-lg text-xs px-1 py-1 text-neutral-900 bg-neutral-100 border border-neutral-300 focus:outline-none hover:bg-neutral-100 focus:ring-4 focus:ring-gray-100 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700"
+          :class="getButtonClasses('neutral', true)"
           :aria-label="`View RDAP information for ${domain.name}`">
           RDAP
         </button>
@@ -261,36 +264,39 @@ watch(() => props.domainName, () => {
         <span v-if="isNotAvailable" class="flex items-center gap-2">
           <!-- Expiration Date Display -->
           <span v-if="hasExpirationDate && !isLoadingRdap" 
-            class="rounded-lg text-xs px-2 py-1 text-neutral-700 bg-neutral-50 border border-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 whitespace-nowrap"
-            :class="{
-              'text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-900/20 dark:border-red-700': isExpired,
-              'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-300 dark:bg-orange-900/20 dark:border-orange-300': isExpirationSoon && !isExpired
-            }"
+            :class="[
+              getBadgeClasses('neutral'),
+              'whitespace-nowrap',
+              {
+                [getBadgeClasses('error')]: isExpired,
+                [getBadgeClasses('warning')]: isExpirationSoon && !isExpired
+              }
+            ]"
             :title="`Expired at ${formattedExpirationDate}`">
             exp. {{ formattedExpirationDate }}
           </span>
           <!-- Loading RDAP indicator -->
           <span v-else-if="isLoadingRdap" 
-            class="rounded-lg text-xs px-2 py-1 text-neutral-500 bg-neutral-50 border border-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700">
-            <SpinnerIcon class="w-3 h-3 fill-neutral-500 text-neutral-200 dark:fill-neutral-400 dark:text-neutral-700 inline"></SpinnerIcon>
+            :class="getBadgeClasses('neutral')">
+            <SpinnerIcon :class="[getIconClasses('neutral'), 'w-3 h-3']"></SpinnerIcon>
           </span>
-          <AlertCircleIcon class="w-5 h-5 text-red-600 dark:text-red-400" :aria-label="'Domain is not available'"></AlertCircleIcon>
+          <AlertCircleIcon :class="[getIconClasses('error'), 'w-5 h-5']" :aria-label="'Domain is not available'"></AlertCircleIcon>
         </span>
         
         <!-- Available -->
         <span v-else-if="isAvailable" class="flex items-center gap-2">
           <a :href="registrationUrl" target="_blank" rel="noopener noreferrer"
-            class="rounded-lg text-xs px-1 py-1 text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors flex items-center gap-1 whitespace-nowrap"
+            :class="[getBadgeClasses('success'), 'whitespace-nowrap flex items-center gap-1']"
             :aria-label="`Register ${domain.name} on Cloudflare`">
             <span>REGISTER</span>
             <OpenIcon class="w-3 h-3" />
           </a>
-          <CheckIcon class="w-5 h-5 text-green-800 dark:text-green-300"></CheckIcon>
+          <CheckIcon :class="[getIconClasses('success'), 'w-5 h-5']"></CheckIcon>
         </span>
         
         <!-- Unknown/Loading -->
         <span v-else-if="isStatusUnknown || isLoadingAvailability" :aria-label="'Checking domain availability'">
-          <SpinnerIcon class="w-5 h-5 fill-orange-600 text-gray-200 dark:fill-orange-400 dark:text-gray-700">
+          <SpinnerIcon :class="[getIconClasses('warning'), 'w-5 h-5']">
           </SpinnerIcon>
         </span>
       </div>

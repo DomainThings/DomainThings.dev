@@ -22,7 +22,7 @@ import { computed } from 'vue';
 
 // Types
 interface Props {
-  readonly class?: string;
+  readonly class?: string | string[];
   readonly animate?: boolean;
 }
 
@@ -33,10 +33,20 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Computed properties
 const computedClasses = computed(() => {
-  const classes = [props.class];
+  const classes = [];
+  
+  // Gérer string ou string[] pour la prop class
+  if (Array.isArray(props.class)) {
+    classes.push(...props.class);
+  } else if (props.class) {
+    classes.push(props.class);
+  }
+  
+  // Ajouter l'animation si activée
   if (props.animate) {
     classes.push('animate-spin');
   }
+  
   return classes.filter(Boolean).join(' ');
 });
 </script>

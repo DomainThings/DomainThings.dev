@@ -8,7 +8,7 @@
 <script setup lang="ts">
 // Types
 interface Props {
-  readonly class?: string;
+  readonly class?: string | string[];
 }
 
 // Props

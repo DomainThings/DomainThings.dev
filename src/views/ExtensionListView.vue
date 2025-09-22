@@ -8,6 +8,9 @@ import SearchIcon from '@/icons/SearchIcon.vue';
 import CloseIcon from '@/icons/CloseIcon.vue';
 import { getDb } from '@/services/dbService';
 import { useRoute, useRouter } from 'vue-router';
+import { useTheme } from '@/composables/useTheme';
+
+const { getIconClasses } = useTheme();
 
 // Types
 interface TldWithBookmark {
@@ -150,7 +153,7 @@ watch([searchQuery, showBookmarkedOnly], () => {
       <form @submit.prevent autocomplete="off" class="flex flex-col gap-3">
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-            <SearchIcon class="w-5 h-5 text-neutral-900 dark:text-neutral-100"></SearchIcon>
+            <SearchIcon :class="[getIconClasses('neutral'), 'w-5 h-5']"></SearchIcon>
           </div>
           <input 
             type="text" 
@@ -163,7 +166,7 @@ watch([searchQuery, showBookmarkedOnly], () => {
             type="button"
             class="absolute inset-y-0 end-0 flex items-center pe-3.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
             :aria-label="'Clear search'">
-            <CloseIcon class="w-5 h-5" />
+            <CloseIcon :class="[getIconClasses('neutral'), 'w-5 h-5']" />
           </button>
         </div>
         
@@ -173,7 +176,7 @@ watch([searchQuery, showBookmarkedOnly], () => {
             <input type="checkbox" v-model="showBookmarkedOnly" class="sr-only peer">
             <div class="relative w-8 h-4 bg-neutral-200 rounded-full dark:bg-neutral-700 after:content-[''] after:absolute after:top-[0px] after:start-[0px] after:bg-neutral-100 after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-neutral-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-neutral-100 peer-checked:bg-neutral-600 dark:peer-checked:bg-neutral-600">
             </div>
-            <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show bookmarked only</span>
+            <span class="ms-3 text-sm font-medium text-neutral-900 dark:text-neutral-300">Show bookmarked only</span>
           </label>
         </div>
       </form>
@@ -194,7 +197,7 @@ watch([searchQuery, showBookmarkedOnly], () => {
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center">
-      <SpinnerIcon class="w-12 h-12 fill-neutral-800 text-neutral-500"></SpinnerIcon>
+      <SpinnerIcon :class="[getIconClasses('neutral'), 'w-12 h-12']"></SpinnerIcon>
     </div>
     
     <!-- Extensions List -->
@@ -217,7 +220,7 @@ watch([searchQuery, showBookmarkedOnly], () => {
         <p class="text-sm">
           <span v-if="searchQuery.trim()">
             Try adjusting your search term or 
-            <button @click="clearSearch" class="text-blue-600 dark:text-blue-400 hover:underline">clear the search</button>
+            <button @click="clearSearch" :class="[getIconClasses('primary'), 'hover:underline']">clear the search</button>
           </span>
           <span v-else-if="showBookmarkedOnly">
             You haven't bookmarked any extensions yet.

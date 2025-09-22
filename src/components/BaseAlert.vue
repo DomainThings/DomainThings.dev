@@ -1,14 +1,13 @@
 <template>
   <div v-if="modelValue" role="alert"
-    :class="classes"
-    class="p-4 mb-4 text-sm rounded-lg">
+    :class="[getAlertClasses(props.type), 'mb-4']">
     <span class="font-medium" v-if="slots.title"><slot name="title"></slot></span> 
     <slot/>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { useTheme } from '@/composables/useTheme';
 
 // Types
 interface Props {
@@ -27,22 +26,13 @@ const slots = defineSlots<{
   default(): any;
 }>();
 
+// Theme composable
+const { getAlertClasses } = useTheme();
+
 // Business logic
 const close = (): void => {
   modelValue.value = false;
 };
-
-// Computed properties
-const classes = computed((): string => {
-  const typeClasses: Record<NonNullable<Props['type']>, string> = {
-    info: 'text-blue-800 bg-blue-50 dark:bg-gray-800 dark:text-blue-400',
-    success: 'text-green-800 bg-green-50 dark:bg-gray-800 dark:text-green-300',
-    warning: 'text-yellow-800 bg-yellow-50 dark:bg-gray-800 dark:text-yellow-400',
-    error: 'text-red-800 bg-red-50 dark:bg-gray-800 dark:text-red-400'
-  };
-  
-  return typeClasses[props.type] || typeClasses.info;
-});
 
 // Expose close method for parent components
 defineExpose({

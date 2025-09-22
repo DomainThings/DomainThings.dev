@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import StarIcon from '@/icons/StarIcon.vue';
 import { getDb } from '@/services/dbService';
+import { useTheme } from '@/composables/useTheme';
 
 // Types
 interface Props {
@@ -15,6 +16,9 @@ interface Emits {
 // Props & Emits
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+// Theme composable
+const { getIconClasses } = useTheme();
 
 // Reactive state
 const isBookmarked = ref(false);
@@ -70,12 +74,11 @@ defineExpose({
     <button 
       @click="toggleBookmark()" 
       type="button"
-      class="flex items-center justify-center p-1 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-500"
-      :class="{ 'text-yellow-500 dark:text-yellow-500': isBookmarked }"
+      class="flex items-center justify-center p-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-500"
       :disabled="isLoading"
       :aria-label="isBookmarked ? `Remove ${tld} from bookmarks` : `Add ${tld} to bookmarks`"
     >
-      <StarIcon class="w-5 h-5" />
+      <StarIcon :class="[isBookmarked ? 'text-yellow-500 dark:text-yellow-500' : 'text-neutral-500 dark:text-neutral-400', 'w-5 h-5']" />
     </button>
     
     <div class="flex items-center text-neutral-900 dark:text-neutral-100 font-mono">
