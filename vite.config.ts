@@ -10,11 +10,21 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
-      registerType: 'autoUpdate',
-      srcDir: 'src',
-      filename: 'serviceWorker.js',
       // manifest.json in public folder
-      manifest: false 
+      manifest: false,
+      registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'serviceWorker.ts',
+      devOptions: {
+        enabled: true,
+        type: 'classic' as const, // Classic mode for better development experience
+        navigateFallback: undefined, // Disable for SPA routing compatibility
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+      },
+      injectRegister: 'auto'
     }),
     tailwindcss()
   ],

@@ -11,7 +11,9 @@ import AlertCircleIcon from '@/icons/AlertCircleIcon.vue';
 import CheckIcon from '@/icons/CheckIcon.vue';
 import SpinnerIcon from '@/icons/SpinnerIcon.vue';
 import BaseModal from './BaseModal.vue';
+import AlertForm from './AlertForm.vue';
 import { getDb } from '@/services/dbService';
+import * as AlertService from '@/services/alertService';
 import OpenIcon from '@/icons/OpenIcon.vue';
 import { useTheme } from '@/composables/useTheme';
 
@@ -63,10 +65,12 @@ const isLoadingAvailability = ref(false);
 const isLoadingBookmark = ref(false);
 const isLoadingRdap = ref(false);
 const domainInfo = ref<Domain | null>(null);
+const existingAlert = ref<AlertService.AlertSettings | null>(null);
 
 // Modal states
 const showDnsModal = ref(false);
 const showRdapModal = ref(false);
+const showAlertModal = ref(false);
 
 // Theme composable
 const { getBadgeClasses, getButtonClasses, getIconClasses, getTextClasses } = useTheme();
@@ -169,7 +173,8 @@ const checkDomainAvailabilityWithRdap = async (): Promise<void> => {
 const loadDomainData = async (): Promise<void> => {
   await Promise.all([
     checkDomainAvailabilityWithRdap(),
-    checkBookmarkStatus().then(status => { isBookmarked.value = status; })
+    checkBookmarkStatus().then(status => { isBookmarked.value = status; }),
+    loadExistingAlert()
   ]);
 };
 
@@ -192,6 +197,45 @@ const toggleBookmark = async (): Promise<void> => {
     console.error('Error toggling bookmark:', error);
   } finally {
     isLoadingBookmark.value = false;
+  }
+};
+
+const loadExistingAlert = async (): Promise<void> => {
+  try {
+    const alert = await AlertService.getAlertByDomain(props.domainName);
+    existingAlert.value = alert || null;
+  } catch (error) {
+    console.error('Error loading existing alert:', error);
+  }
+};
+
+const handleSaveAlert = async (alertSettings: Omit<AlertService.AlertSettings, 'id' | 'createdAt'>): Promise<void> => {
+  try {
+    const savedAlert = await AlertService.saveAlert(alertSettings);
+    existingAlert.value = savedAlert;
+    showAlertModal.value = false;
+  } catch (error) {
+    console.error('Error saving alert:', error);
+  }
+};
+
+const handleDeleteAlert = async (): Promise<void> => {
+  try {
+    await AlertService.removeAlertByDomain(props.domainName);
+    existingAlert.value = null;
+    showAlertModal.value = false;
+  } catch (error) {
+    console.error('Error deleting alert:', error);
+  }
+};
+
+const handleCloseAlertModal = (): void => {
+  showAlertModal.value = false;
+};
+
+const openAlertModal = (): void => {
+  if (expirationDate.value) {
+    showAlertModal.value = true;
   }
 };
 
@@ -263,18 +307,20 @@ watch(() => props.domainName, () => {
         <!-- Not Available -->
         <span v-if="isNotAvailable" class="flex items-center gap-2">
           <!-- Expiration Date Display -->
-          <span v-if="hasExpirationDate && !isLoadingRdap" 
+          <button v-if="hasExpirationDate && !isLoadingRdap" 
+            @click="openAlertModal"
             :class="[
               getBadgeClasses('neutral'),
-              'whitespace-nowrap',
+              'whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity',
               {
                 [getBadgeClasses('error')]: isExpired,
                 [getBadgeClasses('warning')]: isExpirationSoon && !isExpired
               }
             ]"
-            :title="`Expired at ${formattedExpirationDate}`">
+            :title="`Configurer une alerte d'expiration pour ${domain.name}`">
             exp. {{ formattedExpirationDate }}
-          </span>
+            <span v-if="existingAlert" class="ml-1">🔔</span>
+          </button>
           <!-- Loading RDAP indicator -->
           <span v-else-if="isLoadingRdap" 
             :class="getBadgeClasses('neutral')">
@@ -315,6 +361,22 @@ watch(() => props.domainName, () => {
       <template v-slot:header>RDAP {{ domain.name }}</template>
       <template v-slot:body>
         <RdapComponent :domain="domain.name"></RdapComponent>
+      </template>
+    </BaseModal>
+
+    <!-- Alert Modal -->
+    <BaseModal v-model="showAlertModal">
+      <template v-slot:header>Alerte d'expiration</template>
+      <template v-slot:body>
+        <AlertForm 
+          v-if="expirationDate"
+          :domain="domain.name"
+          :expiration-date="expirationDate"
+          :existing-alert="existingAlert"
+          @save="handleSaveAlert"
+          @delete="handleDeleteAlert"
+          @close="handleCloseAlertModal">
+        </AlertForm>
       </template>
     </BaseModal>
   </div>
