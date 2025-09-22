@@ -27,10 +27,26 @@ class AlertService {
   private static instance: AlertService;
   private alerts: Map<string, AlertSettings> = new Map();
   private worker: ServiceWorker | null = null;
+  private isInitialized: boolean = false;
 
   private constructor() {
-    this.initializeServiceWorker();
-    this.loadAlertsFromDatabase();
+    this.initialize();
+  }
+
+  /**
+   * Initialise le service de manière séquentielle pour éviter les race conditions
+   */
+  private async initialize(): Promise<void> {
+    try {
+      // D'abord initialiser le service worker
+      await this.initializeServiceWorker();
+      // Puis charger les alertes depuis la base
+      await this.loadAlertsFromDatabase();
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Erreur lors de l\'initialisation d\'AlertService:', error);
+      this.isInitialized = true; // Marquer comme initialisé même en cas d'erreur pour éviter les blocages
+    }
   }
 
   static getInstance(): AlertService {
@@ -38,6 +54,26 @@ class AlertService {
       AlertService.instance = new AlertService();
     }
     return AlertService.instance;
+  }
+
+  /**
+   * S'assurer que le service est initialisé avant toute opération
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.isInitialized) {
+      // Attendre un court délai pour permettre l'initialisation
+      let attempts = 0;
+      const maxAttempts = 50; // 5 secondes max
+      
+      while (!this.isInitialized && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      if (!this.isInitialized) {
+        console.warn('AlertService n\'est toujours pas initialisé après 5 secondes');
+      }
+    }
   }
 
   /**
@@ -80,6 +116,8 @@ class AlertService {
    * Crée ou met à jour une alerte
    */
   async saveAlert(alertSettings: Omit<AlertSettings, 'id' | 'createdAt'>): Promise<AlertSettings> {
+    await this.ensureInitialized();
+    
     const id = `alert_${alertSettings.domain}_${Date.now()}`;
     const alert: AlertSettings = {
       ...alertSettings,
@@ -115,6 +153,8 @@ class AlertService {
    * Supprime une alerte par ID
    */
   async removeAlert(alertId: string): Promise<boolean> {
+    await this.ensureInitialized();
+    
     const result = await db.removeAlert(alertId);
     if (result.success && result.data) {
       this.alerts.delete(alertId);
@@ -128,6 +168,8 @@ class AlertService {
    * Supprime une alerte par nom de domaine
    */
   async removeAlertByDomain(domain: string): Promise<boolean> {
+    await this.ensureInitialized();
+    
     const result = await db.removeAlertsByDomain(domain);
     if (result.success && result.data && result.data > 0) {
       // Supprimer du cache local
@@ -146,6 +188,8 @@ class AlertService {
    * Récupère une alerte par nom de domaine
    */
   async getAlertByDomain(domain: string): Promise<AlertSettings | undefined> {
+    await this.ensureInitialized();
+    
     // Vérifier d'abord le cache local
     for (const alert of this.alerts.values()) {
       if (alert.domain === domain) {
@@ -168,6 +212,8 @@ class AlertService {
    * Récupère toutes les alertes
    */
   async getAllAlerts(): Promise<AlertSettings[]> {
+    await this.ensureInitialized();
+    
     const result = await db.getAllAlerts();
     if (result.success) {
       // Mettre à jour le cache local
@@ -208,6 +254,8 @@ class AlertService {
    * Demande une vérification manuelle des notifications au Service Worker
    */
   async triggerNotificationCheck(): Promise<void> {
+    await this.ensureInitialized();
+    
     if (!this.worker) {
       console.warn('Service Worker non disponible pour la vérification des notifications');
       return;
