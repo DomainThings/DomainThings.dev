@@ -1,7 +1,10 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --font-family-brand: 'Playfair Display', serif;
+  
   --color-primary-50: #F2E7FD;
   --color-primary-100: #D9BDFA;
   --color-primary-200: #C192F6;
@@ -56,4 +59,11 @@
   --color-info-700: #0369a1;
   --color-info-800: #075985;
   --color-info-900: #0c4a6e;
+}
+
+/* Font utility classes */
+@layer utilities {
+  .font-brand {
+    font-family: var(--font-family-brand);
+  }
 }

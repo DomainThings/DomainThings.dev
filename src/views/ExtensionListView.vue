@@ -145,7 +145,7 @@ watch([searchQuery, showBookmarkedOnly], () => {
 <template>
   <DefaultLayout>
     <template #page-title>
-      <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Extensions</h2>
+      <h2 class="text-2xl font-brand font-bold text-neutral-900 dark:text-neutral-100">Extensions</h2>
     </template>
     
     <!-- Search Form -->

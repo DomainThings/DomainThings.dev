@@ -80,7 +80,7 @@ defineExpose({
     <header class="fixed top-0 left-0 right-0 z-10 flex w-full h-16 px-4 py-2 justify-between items-center bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
       <!-- App Title in Header -->
       <div class="flex-shrink-0">
-        <h1 class="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 font-brand">
           <RouterLink 
             :to="{ name: 'Search' }"
             class="hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"

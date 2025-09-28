@@ -1,7 +1,7 @@
 <template>
   <DefaultLayout>
     <template #page-title>
-      <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Settings</h2>
+      <h2 class="text-2xl font-brand font-bold text-neutral-900 dark:text-neutral-100">Settings</h2>
     </template>
     
     <div class="settings-view space-y-6">
