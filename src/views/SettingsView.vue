@@ -58,6 +58,54 @@
           </div>
         </div>
       </section>
+
+      <!-- Notifications Section -->
+      <section class="space-y-3">
+        <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">
+          Notifications
+        </h2>
+        
+        <!-- Service Worker Status -->
+        <div class="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-medium text-neutral-900 dark:text-white">
+                Service Worker Status
+              </h3>
+              <p class="text-xs" :class="isServiceWorkerReady ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'">
+                {{ serviceWorkerStatus }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div :class="['w-2 h-2 rounded-full', isServiceWorkerReady ? 'bg-green-500' : 'bg-yellow-500']"></div>
+              <span class="text-xs text-neutral-600 dark:text-neutral-400">
+                {{ isServiceWorkerReady ? 'Ready' : 'Loading' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Test Notification -->
+        <div class="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-medium text-neutral-900 dark:text-white">
+                Test Notifications
+              </h3>
+              <p class="text-xs text-neutral-600 dark:text-neutral-400">
+                Send a test notification to verify the system
+              </p>
+            </div>
+            <button
+              @click="testNotification"
+              :disabled="!isServiceWorkerReady"
+              :class="['px-3 py-1.5 text-xs font-medium', getButtonClasses('primary')]"
+            >
+              Test
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   </DefaultLayout>
 </template>
@@ -68,8 +116,10 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import DarkModeSwitch from '@/components/DarkModeSwitch.vue'
 import { clearAllData } from '@/services/dbService'
 import { useTheme } from '@/composables/useTheme'
+import { useServiceWorker } from '@/composables/useServiceWorker'
 
 const { getButtonClasses } = useTheme()
+const { isServiceWorkerReady, serviceWorkerStatus, testNotification } = useServiceWorker()
 
 // Methods
 const clearStorage = async (): Promise<void> => {

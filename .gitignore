@@ -11,6 +11,7 @@ node_modules
 .DS_Store
 dist
 dist-ssr
+dev-dist
 coverage
 *.local
 
@@ -27,3 +28,7 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Generated files
+public/dev-sw.js
+public/dev-sw.js.map

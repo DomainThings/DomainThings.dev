@@ -307,11 +307,8 @@ watch(() => route.query.q, () => {
             Try "example" to see example.com, example.org, etc.
           </p>
           
-          <!-- Quick Actions for Bookmarked TLDs -->
-          <div v-if="bookmarkedTlds.length > 0" class="mt-6 space-y-3">
-            <p class="text-xs text-neutral-400 dark:text-neutral-500">
-              Or try with your {{ bookmarkedTlds.length }} bookmarked extension{{ bookmarkedTlds.length > 1 ? 's' : '' }}:
-            </p>
+          <!-- Quick Actions -->
+          <div class="mt-6 space-y-3">
             <div class="flex flex-wrap gap-2 justify-center">
               <button
                 @click="searchWithBookmarks('example')"

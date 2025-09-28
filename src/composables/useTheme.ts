@@ -1,35 +1,43 @@
 /**
- * Composable pour gérer les classes CSS thématiques de manière sémantique
- * Similaire aux couleurs Vuetify (primary, success, warning, error, info)
+ * Vue 3 composable for managing semantic CSS theme classes.
+ * Provides a consistent theming system similar to Vuetify's color variants
+ * with automatic dark mode support via Tailwind CSS classes.
  */
 
-export type ThemeVariant = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
+export type ThemeVariant = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'yellow';
 export type ThemeIntensity = 'light' | 'base' | 'dark';
 export type ComponentType = 'button' | 'badge' | 'alert' | 'text' | 'border' | 'background';
 
+/**
+ * Complete theme class definition for a semantic variant.
+ * Includes light mode, dark mode, and hover states for text, background, and border.
+ */
 interface ThemeClasses {
-  text: string;
-  background: string;
-  border: string;
-  hover: {
-    text: string;
-    background: string;
-    border: string;
+  readonly text: string;
+  readonly background: string;
+  readonly border: string;
+  readonly hover: {
+    readonly text: string;
+    readonly background: string;
+    readonly border: string;
   };
-  dark: {
-    text: string;
-    background: string;
-    border: string;
-    hover: {
-      text: string;
-      background: string;
-      border: string;
+  readonly dark: {
+    readonly text: string;
+    readonly background: string;
+    readonly border: string;
+    readonly hover: {
+      readonly text: string;
+      readonly background: string;
+      readonly border: string;
     };
   };
 }
 
 /**
- * Définition des classes CSS pour chaque variante thématique
+ * Theme class definitions for each semantic variant.
+ * Uses Tailwind CSS color palette with consistent naming convention:
+ * - Light mode: 50-100 backgrounds, 200-300 borders, 700-800 text
+ * - Dark mode: 900/20 backgrounds, 600-700 borders, 200-300 text
  */
 const themeClasses: Record<ThemeVariant, ThemeClasses> = {
   primary: {
@@ -102,7 +110,7 @@ const themeClasses: Record<ThemeVariant, ThemeClasses> = {
       border: 'hover:border-error-300',
     },
     dark: {
-      text: 'dark:text-error-300',
+      text: 'dark:text-error-400',
       background: 'dark:bg-error-900/20',
       border: 'dark:border-error-700',
       hover: {
@@ -152,17 +160,43 @@ const themeClasses: Record<ThemeVariant, ThemeClasses> = {
       },
     },
   },
+  yellow: {
+    text: 'text-yellow-700',
+    background: 'bg-yellow-100',
+    border: 'border-yellow-300',
+    hover: {
+      text: 'hover:text-yellow-800',
+      background: 'hover:bg-yellow-100',
+      border: 'hover:border-yellow-400',
+    },
+    dark: {
+      text: 'dark:text-yellow-300',
+      background: 'dark:bg-yellow-800',
+      border: 'dark:border-yellow-700',
+      hover: {
+        text: 'dark:hover:text-yellow-200',
+        background: 'dark:hover:bg-yellow-700',
+        border: 'dark:hover:border-yellow-600',
+      },
+    },
+  }
 };
 
 /**
- * Composable principal pour utiliser les classes thématiques
+ * Main composable for accessing theme utilities.
+ * Provides methods to generate CSS classes for different component types
+ * with consistent theming and dark mode support.
  */
 export function useTheme() {
   
   /**
-   * Obtenir les classes CSS pour un composant de type badge/chip
+   * Generate CSS classes for badge/chip components.
+   * Returns a space-separated string of Tailwind classes including:
+   * - Base styling (rounded, padding, text size)
+   * - Theme colors (text, background, border)
+   * - Dark mode variants
    */
-  const getBadgeClasses = (variant: ThemeVariant = 'neutral') => {
+  const getBadgeClasses = (variant: ThemeVariant = 'neutral'): string => {
     const theme = themeClasses[variant];
     return [
       'rounded-lg text-xs px-2 py-1',
@@ -177,11 +211,16 @@ export function useTheme() {
   };
 
   /**
-   * Obtenir les classes CSS pour un bouton
+   * Generate CSS classes for button components.
+   * @param variant - Semantic color variant
+   * @param outline - Whether to use outline style (transparent background)
+   * @param border - Whether to include border styling
+   * @returns Space-separated string of Tailwind CSS classes
    */
-  const getButtonClasses = (variant: ThemeVariant = 'neutral', outline: boolean = false, border: boolean = true) => {
+  const getButtonClasses = (variant: ThemeVariant = 'neutral', outline: boolean = false, border: boolean = true): string => {
     const theme = themeClasses[variant];
     
+    // Outline style: transparent background with colored text and border
     if (outline) {
       return [
         'rounded-lg text-xs px-2 py-1 cursor-pointer',
@@ -198,9 +237,10 @@ export function useTheme() {
         theme.dark.hover.background,
         theme.dark.hover.border,
         'transition-colors',
-      ].join(' ');
+      ].filter(Boolean).join(' ');
     }
 
+    // Filled style: colored background with matching text and border
     return [
       'rounded-lg text-xs px-2 py-1 cursor-pointer',
       theme.text,
@@ -217,13 +257,15 @@ export function useTheme() {
       theme.dark.hover.background,
       theme.dark.hover.border,
       'transition-colors',
-    ].join(' ');
+    ].filter(Boolean).join(' ');
   };
 
   /**
-   * Obtenir les classes CSS pour une alerte
+   * Generate CSS classes for alert/notification components.
+   * @param variant - Semantic color variant (defaults to 'info')
+   * @returns Space-separated string of Tailwind CSS classes
    */
-  const getAlertClasses = (variant: ThemeVariant = 'info') => {
+  const getAlertClasses = (variant: ThemeVariant = 'info'): string => {
     const theme = themeClasses[variant];
     return [
       'rounded-lg p-4 border',
@@ -237,9 +279,11 @@ export function useTheme() {
   };
 
   /**
-   * Obtenir les classes CSS pour du texte sémantique
+   * Generate CSS classes for semantic text styling.
+   * @param variant - Semantic color variant
+   * @returns Space-separated string of text color classes
    */
-  const getTextClasses = (variant: ThemeVariant) => {
+  const getTextClasses = (variant: ThemeVariant): string => {
     const theme = themeClasses[variant];
     return [
       theme.text,
@@ -248,13 +292,15 @@ export function useTheme() {
   };
 
   /**
-   * Obtenir les classes CSS pour les icônes avec couleurs sémantiques
-   * Retourne automatiquement les classes text-* et fill-* pour la variante donnée
+   * Generate CSS classes for icon components with semantic colors.
+   * Automatically provides both text-* and fill-* classes for SVG icons.
+   * @param variant - Semantic color variant  
+   * @returns Space-separated string of text and fill color classes
    */
-  const getIconClasses = (variant: ThemeVariant) => {
+  const getIconClasses = (variant: ThemeVariant): string => {
     const theme = themeClasses[variant];
 
-    // Générer les classes text et fill automatiquement
+    // Generate both text and fill classes for comprehensive SVG icon support
     const textLight = theme.text;
     const textDark = theme.dark.text;
     const fillLight = theme.text.replace('text-', 'fill-');
@@ -269,14 +315,16 @@ export function useTheme() {
   };
 
   /**
-   * Obtenir une classe CSS spécifique
+   * Get a specific CSS class for fine-grained control.
+   * Useful when you need individual theme properties rather than complete class sets.
+   * @param variant - Semantic color variant
+   * @param type - Type of CSS property to retrieve
+   * @param isDark - Whether to get dark mode variant
+   * @returns Single Tailwind CSS class string
    */
-  const getClass = (variant: ThemeVariant, type: 'text' | 'background' | 'border', isDark = false) => {
+  const getClass = (variant: ThemeVariant, type: 'text' | 'background' | 'border', isDark = false): string => {
     const theme = themeClasses[variant];
-    if (isDark) {
-      return theme.dark[type];
-    }
-    return theme[type];
+    return isDark ? theme.dark[type] : theme[type];
   };
 
   return {

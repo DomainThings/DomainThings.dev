@@ -77,7 +77,7 @@ defineExpose({
 <template>
   <div class="flex flex-col min-h-screen items-center">
     <!-- Header Navigation -->
-    <header class="fixed top-0 left-0 right-0 z-50 flex w-full h-16 px-4 py-2 justify-between items-center bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+    <header class="fixed top-0 left-0 right-0 z-10 flex w-full h-16 px-4 py-2 justify-between items-center bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
       <!-- App Title in Header -->
       <div class="flex-shrink-0">
         <h1 class="text-xl font-bold text-neutral-900 dark:text-neutral-100">
@@ -159,13 +159,13 @@ defineExpose({
     <!-- Main Content -->
     <main 
       v-if="!showMobileMenu"
-      class="flex-1 px-4 py-2 max-w-lg w-full text-neutral-900 dark:text-neutral-100 mb-12"
+      class="flex-1 px-4 py-2 max-w-4xl w-full text-neutral-900 dark:text-neutral-100 mb-12"
     >
       <slot />
     </main>
 
     <!-- Footer -->
-    <footer class="fixed bottom-0 left-0 right-0 z-50 flex w-full h-12 px-4 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
+    <footer class="fixed bottom-0 left-0 right-0 z-10 flex w-full h-12 px-4 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
       <div class="flex w-full justify-end items-center">
         <a 
           href="https://github.com/domain-check/domain-check.github.io" 

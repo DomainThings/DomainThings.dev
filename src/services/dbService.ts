@@ -6,13 +6,14 @@ import { Domain, type DomainData } from '@/types';
  */
 const DB_CONFIG = Object.freeze({
   name: 'domaincheck-db',
-  version: 4,
+  version: 7,
   stores: {
     domains: 'domains',
     tlds: 'tlds', 
     searches: 'searches',
     dnsCache: 'dnsCache',
-    settings: 'settings'
+    settings: 'settings',
+    alerts: 'alerts'
   }
 } as const);
 
@@ -47,6 +48,19 @@ interface SettingsRecord {
   readonly key: string;
   readonly value: any;
   readonly lastUpdated: number;
+}
+
+/**
+ * Alert record for database storage
+ */
+interface AlertRecord {
+  readonly id: string;
+  readonly domain: string;
+  readonly alertDate: string; // ISO string
+  readonly reminderFrequency: 'once' | 'daily' | 'weekly';
+  readonly expirationDate: string; // ISO string
+  readonly createdAt: string; // ISO string
+  readonly lastNotified?: string; // ISO string
 }
 
 /**
@@ -116,10 +130,25 @@ export const getDb = async (): Promise<IDBPDatabase> => {
         });
       }
       
-      // Migration logic for existing data
-      if (oldVersion < 4) {
-        // Add any necessary data migrations here
-        console.log('Migrating data to new schema...');
+      // Create alerts store
+      if (!db.objectStoreNames.contains(DB_CONFIG.stores.alerts)) {
+        const alertsStore = db.createObjectStore(DB_CONFIG.stores.alerts, { 
+          keyPath: 'id' 
+        });
+        alertsStore.createIndex('domain', 'domain', { unique: false });
+        alertsStore.createIndex('expirationDate', 'expirationDate');
+      }
+      
+      // Migration for version 7: Remove 'enabled' field from alerts
+      if (oldVersion < 7 && db.objectStoreNames.contains(DB_CONFIG.stores.alerts)) {
+        const alertsStore = transaction.objectStore(DB_CONFIG.stores.alerts);
+        
+        // Remove old 'enabled' index if it exists
+        if (alertsStore.indexNames.contains('enabled')) {
+          alertsStore.deleteIndex('enabled');
+        }
+        
+        console.log('Removed enabled index from alerts store in database migration to version 7');
       }
     },
     blocked() {
@@ -384,6 +413,202 @@ export const getSetting = async <T>(
 };
 
 /**
+ * Saves an alert to the database
+ * @param alert - Alert record to save
+ * @returns Promise resolving to operation result
+ */
+export const saveAlert = async (alert: AlertRecord): Promise<DbResult<void>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readwrite');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    
+    await store.put(alert);
+    await tx.done;
+    
+    return { success: true };
+  } catch (error) {
+    return handleDbError('save alert', error);
+  }
+};
+
+/**
+ * Gets an alert from the database by ID
+ * @param id - Alert ID to retrieve
+ * @returns Promise resolving to alert result
+ */
+export const getAlert = async (id: string): Promise<DbResult<AlertRecord | null>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readonly');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    
+    const record = await store.get(id);
+    await tx.done;
+    
+    return { success: true, data: record || null };
+  } catch (error) {
+    return handleDbError('get alert', error);
+  }
+};
+
+/**
+ * Gets an alert from the database by domain name
+ * @param domain - Domain name to search for
+ * @returns Promise resolving to alert result
+ */
+export const getAlertByDomain = async (domain: string): Promise<DbResult<AlertRecord | null>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readonly');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    const index = store.index('domain');
+    
+    const record = await index.get(domain);
+    await tx.done;
+    
+    return { success: true, data: record || null };
+  } catch (error) {
+    return handleDbError('get alert by domain', error);
+  }
+};
+
+/**
+ * Gets all alerts from the database for a specific domain
+ * @param domain - Domain name to search for
+ * @returns Promise resolving to alerts result
+ */
+export const getAllAlertsByDomain = async (domain: string): Promise<DbResult<AlertRecord[]>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readonly');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    const index = store.index('domain');
+    
+    const records = await index.getAll(domain);
+    await tx.done;
+    
+    return { success: true, data: records };
+  } catch (error) {
+    return handleDbError('get all alerts by domain', error);
+  }
+};
+
+/**
+ * Gets all alerts from the database with optional filtering
+ * @param filter - Optional filter function
+ * @returns Promise resolving to alerts result
+ */
+export const getAllAlerts = async (
+  filter?: (alert: AlertRecord) => boolean
+): Promise<DbResult<AlertRecord[]>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readonly');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    
+    const records = await store.getAll();
+    await tx.done;
+    
+    let alerts = records;
+    
+    if (filter) {
+      alerts = alerts.filter(filter);
+    }
+    
+    return { success: true, data: alerts };
+  } catch (error) {
+    return handleDbError('get all alerts', error);
+  }
+};
+
+
+
+/**
+ * Removes an alert from the database by ID
+ * @param id - Alert ID to remove
+ * @returns Promise resolving to operation result
+ */
+export const removeAlert = async (id: string): Promise<DbResult<boolean>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readwrite');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    
+    const existingRecord = await store.get(id);
+    if (!existingRecord) {
+      return { success: true, data: false };
+    }
+    
+    await store.delete(id);
+    await tx.done;
+    
+    return { success: true, data: true };
+  } catch (error) {
+    return handleDbError('remove alert', error);
+  }
+};
+
+/**
+ * Removes alerts by domain name
+ * @param domain - Domain name to remove alerts for
+ * @returns Promise resolving to operation result
+ */
+export const removeAlertsByDomain = async (domain: string): Promise<DbResult<number>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readwrite');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    const index = store.index('domain');
+    
+    let deletedCount = 0;
+    const keys = await index.getAllKeys(domain);
+    
+    for (const key of keys) {
+      await store.delete(key);
+      deletedCount++;
+    }
+    
+    await tx.done;
+    
+    return { success: true, data: deletedCount };
+  } catch (error) {
+    return handleDbError('remove alerts by domain', error);
+  }
+};
+
+/**
+ * Updates the last notified timestamp for an alert
+ * @param id - Alert ID
+ * @param timestamp - Notification timestamp (ISO string)
+ * @returns Promise resolving to operation result
+ */
+export const updateAlertLastNotified = async (id: string, timestamp: string): Promise<DbResult<void>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readwrite');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    
+    const record = await store.get(id);
+    if (!record) {
+      return { success: false, error: 'Alert not found' };
+    }
+    
+    const updatedRecord: AlertRecord = {
+      ...record,
+      lastNotified: timestamp
+    };
+    
+    await store.put(updatedRecord);
+    await tx.done;
+    
+    return { success: true };
+  } catch (error) {
+    return handleDbError('update alert last notified', error);
+  }
+};
+
+/**
  * Clears all data from the database
  * @returns Promise resolving to operation result
  */
@@ -393,13 +618,15 @@ export const clearAllData = async (): Promise<DbResult<void>> => {
     const tx = db.transaction([
       DB_CONFIG.stores.domains,
       DB_CONFIG.stores.tlds,
-      DB_CONFIG.stores.settings
+      DB_CONFIG.stores.settings,
+      DB_CONFIG.stores.alerts
     ], 'readwrite');
     
     await Promise.all([
       tx.objectStore(DB_CONFIG.stores.domains).clear(),
       tx.objectStore(DB_CONFIG.stores.tlds).clear(),
-      tx.objectStore(DB_CONFIG.stores.settings).clear()
+      tx.objectStore(DB_CONFIG.stores.settings).clear(),
+      tx.objectStore(DB_CONFIG.stores.alerts).clear()
     ]);
     
     await tx.done;
@@ -418,23 +645,25 @@ export const getDbStats = async (): Promise<DbResult<{
   domainCount: number;
   tldCount: number;
   settingCount: number;
+  alertCount: number;
   watchListCount: number;
   dbSize: string;
 }>> => {
   try {
     const db = await getDb();
     
-    const [domainsCount, tldsCount, settingsCount, watchListResult] = await Promise.all([
+    const [domainsCount, tldsCount, settingsCount, alertsCount, watchListResult] = await Promise.all([
       db.count(DB_CONFIG.stores.domains),
       db.count(DB_CONFIG.stores.tlds),
       db.count(DB_CONFIG.stores.settings),
+      db.count(DB_CONFIG.stores.alerts),
       getWatchListDomains()
     ]);
     
     const watchListCount = watchListResult.success ? watchListResult.data?.length ?? 0 : 0;
     
     // Estimate database size (rough approximation)
-    const dbSize = '~' + Math.round((domainsCount * 500 + tldsCount * 100 + settingsCount * 50) / 1024) + 'KB';
+    const dbSize = '~' + Math.round((domainsCount * 500 + tldsCount * 100 + settingsCount * 50 + alertsCount * 200) / 1024) + 'KB';
     
     return {
       success: true,
@@ -442,6 +671,7 @@ export const getDbStats = async (): Promise<DbResult<{
         domainCount: domainsCount,
         tldCount: tldsCount,
         settingCount: settingsCount,
+        alertCount: alertsCount,
         watchListCount,
         dbSize
       }
@@ -467,4 +697,4 @@ export const closeDb = (): void => {
  * @returns Promise resolving to migration result
  */
 // Export types for external use
-export type { DomainRecord, TldRecord, SettingsRecord, DbResult };
+export type { DomainRecord, TldRecord, SettingsRecord, AlertRecord, DbResult };

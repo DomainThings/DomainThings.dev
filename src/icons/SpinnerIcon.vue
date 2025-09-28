@@ -35,14 +35,14 @@ const props = withDefaults(defineProps<Props>(), {
 const computedClasses = computed(() => {
   const classes = [];
   
-  // Gérer string ou string[] pour la prop class
+  // Handle string or string[] for the class prop
   if (Array.isArray(props.class)) {
     classes.push(...props.class);
   } else if (props.class) {
     classes.push(props.class);
   }
   
-  // Ajouter l'animation si activée
+  // Add animation if enabled
   if (props.animate) {
     classes.push('animate-spin');
   }
