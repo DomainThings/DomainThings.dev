@@ -4,7 +4,7 @@
  * with automatic dark mode support via Tailwind CSS classes.
  */
 
-export type ThemeVariant = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
+export type ThemeVariant = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'yellow';
 export type ThemeIntensity = 'light' | 'base' | 'dark';
 export type ComponentType = 'button' | 'badge' | 'alert' | 'text' | 'border' | 'background';
 
@@ -160,6 +160,26 @@ const themeClasses: Record<ThemeVariant, ThemeClasses> = {
       },
     },
   },
+  yellow: {
+    text: 'text-yellow-700',
+    background: 'bg-yellow-100',
+    border: 'border-yellow-300',
+    hover: {
+      text: 'hover:text-yellow-800',
+      background: 'hover:bg-yellow-100',
+      border: 'hover:border-yellow-400',
+    },
+    dark: {
+      text: 'dark:text-yellow-300',
+      background: 'dark:bg-yellow-800',
+      border: 'dark:border-yellow-700',
+      hover: {
+        text: 'dark:hover:text-yellow-200',
+        background: 'dark:hover:bg-yellow-700',
+        border: 'dark:hover:border-yellow-600',
+      },
+    },
+  }
 };
 
 /**
