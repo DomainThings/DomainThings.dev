@@ -159,7 +159,7 @@ defineExpose({
     <!-- Main Content -->
     <main 
       v-if="!showMobileMenu"
-      class="flex-1 px-4 py-2 max-w-lg w-full text-neutral-900 dark:text-neutral-100 mb-12"
+      class="flex-1 px-4 py-2 max-w-4xl w-full text-neutral-900 dark:text-neutral-100 mb-12"
     >
       <slot />
     </main>

@@ -672,6 +672,61 @@ class AlertService {
   }
 
   /**
+   * Get all alert settings for a specific domain
+   * 
+   * @param domain - The domain name
+   * @returns Array of alert settings for the domain
+   * @throws {AlertServiceError} When retrieval fails
+   * 
+   * @example
+   * ```typescript
+   * const alerts = await alertService.getAllAlertsByDomain('example.com');
+   * console.log(`Found ${alerts.length} alerts for domain`);
+   * ```
+   */
+  async getAllAlertsByDomain(domain: string): Promise<readonly AlertSettings[]> {
+    await this.ensureInitialized();
+    
+    if (!isValidDomain(domain)) {
+      throw new AlertServiceError(
+        `Invalid domain format: ${domain}`,
+        AlertServiceErrorCode.INVALID_INPUT
+      );
+    }
+
+    try {
+      // Get from database
+      const result = await db.getAllAlertsByDomain(domain);
+      
+      if (result.success) {
+        const alerts = result.data?.map(record => {
+          const alert = this.convertDbRecordToAlert(record);
+          // Update local cache
+          this.alerts.set(alert.id, alert);
+          return alert;
+        }) || [];
+        
+        return Object.freeze(alerts);
+      }
+      
+      // Fallback to cached data on database error
+      const cachedAlerts = Array.from(this.alerts.values()).filter(alert => alert.domain === domain);
+      console.warn('Database read failed, returning cached alerts for domain');
+      return Object.freeze(cachedAlerts);
+      
+    } catch (error) {
+      const alertError = new AlertServiceError(
+        `Failed to get alerts for domain: ${domain}`,
+        AlertServiceErrorCode.DATABASE_ERROR,
+        error instanceof Error ? error : new Error(String(error))
+      );
+      
+      console.error('Get domain alerts failed:', alertError);
+      throw alertError;
+    }
+  }
+
+  /**
    * Get all configured alerts
    * 
    * @returns Array of all alert settings
@@ -891,6 +946,15 @@ export const removeAlertByDomain = (domain: string): Promise<boolean> =>
  */
 export const getAlertByDomain = (domain: string): Promise<AlertSettings | undefined> => 
   alertService.getAlertByDomain(domain);
+
+/**
+ * Get all alerts for a specific domain
+ * 
+ * @param domain - Domain name
+ * @returns Array of alert settings for the domain
+ */
+export const getAllAlertsByDomain = (domain: string): Promise<readonly AlertSettings[]> => 
+  alertService.getAllAlertsByDomain(domain);
 
 /**
  * Get all configured alerts

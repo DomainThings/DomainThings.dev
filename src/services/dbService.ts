@@ -464,6 +464,27 @@ export const getAlertByDomain = async (domain: string): Promise<DbResult<AlertRe
 };
 
 /**
+ * Gets all alerts from the database for a specific domain
+ * @param domain - Domain name to search for
+ * @returns Promise resolving to alerts result
+ */
+export const getAllAlertsByDomain = async (domain: string): Promise<DbResult<AlertRecord[]>> => {
+  try {
+    const db = await getDb();
+    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readonly');
+    const store = tx.objectStore(DB_CONFIG.stores.alerts);
+    const index = store.index('domain');
+    
+    const records = await index.getAll(domain);
+    await tx.done;
+    
+    return { success: true, data: records };
+  } catch (error) {
+    return handleDbError('get all alerts by domain', error);
+  }
+};
+
+/**
  * Gets all alerts from the database with optional filtering
  * @param filter - Optional filter function
  * @returns Promise resolving to alerts result

@@ -14,7 +14,7 @@ interface Props {
 
 interface Emits {
   save: [alert: Omit<AlertService.AlertSettings, 'id' | 'createdAt'>];
-  delete: [];
+  delete: [alertId: string];
   close: [];
 }
 
@@ -82,7 +82,9 @@ const handleSave = () => {
 };
 
 const handleDelete = () => {
-  emit('delete');
+  if (props.existingAlert?.id) {
+    emit('delete', props.existingAlert.id);
+  }
 };
 
 const handleClose = () => {
