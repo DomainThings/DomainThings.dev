@@ -384,7 +384,7 @@ const syncAlertsToIndexedDB = async (alerts: readonly AlertSettings[]): Promise<
           const putRequest = store.put(normalizedAlert);
           putRequest.onsuccess = checkCompletion;
           putRequest.onerror = () => {
-            console.error(`Failed to sync alert: ${alert.domain}`, putRequest.error);
+            console.error('Failed to sync alert: %s', alert.domain, putRequest.error);
             checkCompletion(); // Continue with other alerts
           };
         });
