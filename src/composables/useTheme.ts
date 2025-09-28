@@ -110,7 +110,7 @@ const themeClasses: Record<ThemeVariant, ThemeClasses> = {
       border: 'hover:border-error-300',
     },
     dark: {
-      text: 'dark:text-error-300',
+      text: 'dark:text-error-400',
       background: 'dark:bg-error-900/20',
       border: 'dark:border-error-700',
       hover: {
