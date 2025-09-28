@@ -10,6 +10,8 @@ import StarIcon from '@/icons/StarIcon.vue';
 import AlertCircleIcon from '@/icons/AlertCircleIcon.vue';
 import CheckIcon from '@/icons/CheckIcon.vue';
 import SpinnerIcon from '@/icons/SpinnerIcon.vue';
+import BellIcon from '@/icons/BellIcon.vue';
+import BellOutlineIcon from '@/icons/BellOutlineIcon.vue';
 import BaseModal from './BaseModal.vue';
 import AlertForm from './AlertForm.vue';
 import { getDb } from '@/services/dbService';
@@ -306,20 +308,22 @@ watch(() => props.domainName, () => {
       <div class="flex items-center gap-2">
         <!-- Not Available -->
         <span v-if="isNotAvailable" class="flex items-center gap-2">
-          <!-- Expiration Date Display -->
+          <!-- Expiration Alert Button -->
           <button v-if="hasExpirationDate && !isLoadingRdap" 
             @click="openAlertModal"
             :class="[
-              getBadgeClasses('neutral'),
-              'whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity',
-              {
-                [getBadgeClasses('error')]: isExpired,
-                [getBadgeClasses('warning')]: isExpirationSoon && !isExpired
-              }
+              getButtonClasses('yellow'),
+              'whitespace-nowrap flex items-center gap-2 hover:opacity-80 transition-opacity'
             ]"
             :title="`Configure expiration alert for ${domain.name}`">
-            exp. {{ formattedExpirationDate }}
-            <span v-if="existingAlert" class="ml-1">🔔</span>
+            <BellIcon v-if="existingAlert" :class="[getIconClasses('yellow'), 'w-4 h-4']" />
+            <BellOutlineIcon v-else :class="[getIconClasses('yellow'), 'w-4 h-4']" />
+            <span :class="{
+              [getTextClasses('yellow')]: isExpired,
+              [getTextClasses('yellow')]: isExpirationSoon && !isExpired
+            }">
+              exp. {{ formattedExpirationDate }}
+            </span>
           </button>
           <!-- Loading RDAP indicator -->
           <span v-else-if="isLoadingRdap" 
