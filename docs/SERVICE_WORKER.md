@@ -2,50 +2,50 @@
 
 ## 🔧 Architecture
 
-Ce projet utilise un système automatisé pour gérer le Service Worker en développement et en production :
+This project uses an automated system to manage the Service Worker in development and production:
 
-### 📁 **Fichiers**
+### 📁 **Files**
 
-- `src/serviceWorker.ts` - Service Worker principal avec Workbox (prod)
-- `scripts/build-dev-sw.js` - Script de build pour le développement
-- `public/dev-sw.js` - Service Worker généré automatiquement (dev)
+- `src/serviceWorker.ts` - Main Service Worker with Workbox (prod)
+- `scripts/build-dev-sw.js` - Build script for development
+- `public/dev-sw.js` - Automatically generated Service Worker (dev)
 
-### ⚙️ **Fonctionnement**
+### ⚙️ **How it works**
 
-#### **Mode Développement (`npm run dev`)**
-1. **Build automatique** : `npm run build:dev-sw` compile `serviceWorker.ts`
-2. **Mock Workbox** : Remplace les dépendances Workbox par des mocks
-3. **Output** : Génère `public/dev-sw.js` (format IIFE, lisible)
-4. **Vite PWA** : Utilise le Service Worker généré
+#### **Development Mode (`npm run dev`)**
+1. **Automatic build**: `npm run build:dev-sw` compiles `serviceWorker.ts`
+2. **Mock Workbox**: Replaces Workbox dependencies with mocks
+3. **Output**: Generates `public/dev-sw.js` (IIFE format, readable)
+4. **Vite PWA**: Uses the generated Service Worker
 
-#### **Mode Production (`npm run build`)**
-- Vite PWA utilise directement `src/serviceWorker.ts`
-- Workbox complet avec precaching et optimisations
+#### **Production Mode (`npm run build`)**
+- Vite PWA directly uses `src/serviceWorker.ts`
+- Complete Workbox with precaching and optimizations
 
-## 🚀 **Commandes**
+## 🚀 **Commands**
 
 ```bash
-# Développement (auto-build + serveur)
+# Development (auto-build + server)
 npm run dev
 
-# Build manuel du Service Worker de dev
+# Manual build of dev Service Worker
 npm run build:dev-sw
 
-# Build de production
+# Production build
 npm run build
 ```
 
-## 🧪 **Testing des notifications**
+## 🧪 **Testing notifications**
 
-1. Ouvrir http://localhost:5174/
-2. Aller dans Settings (⚙️)
-3. Vérifier le statut du Service Worker (doit être vert)
-4. Cliquer "Test" pour une notification d'essai
-5. Configurer des alertes sur les domaines expirés
+1. Open http://localhost:5174/
+2. Go to Settings (⚙️)
+3. Check the Service Worker status (should be green)
+4. Click "Test" for a test notification
+5. Configure alerts on expired domains
 
-## 📋 **Logs à vérifier**
+## 📋 **Logs to verify**
 
-### Console principale
+### Main console
 ```
 🔧 Initializing Service Worker communications...
 📋 Service Worker ready: ServiceWorkerRegistration {...}
@@ -63,18 +63,18 @@ Service Worker received message: {type: 'SHOW_NOTIFICATION', ...}
 
 ## 🔍 **Debugging**
 
-Si le Service Worker ne fonctionne pas :
+If the Service Worker is not working:
 
-1. **Vérifier les DevTools** : Application → Service Workers
-2. **Console errors** : Erreurs de compilation/import
-3. **Rebuild** : `npm run build:dev-sw` puis rafraîchir
-4. **Clear cache** : DevTools → Application → Storage → Clear storage
+1. **Check DevTools**: Application → Service Workers
+2. **Console errors**: Compilation/import errors
+3. **Rebuild**: `npm run build:dev-sw` then refresh
+4. **Clear cache**: DevTools → Application → Storage → Clear storage
 
 ## 📝 **Modifications**
 
-Pour modifier le comportement des notifications :
-- **Éditer** `src/serviceWorker.ts`
-- **Relancer** `npm run dev` (rebuild automatique)
-- **Tester** via Settings → Test
+To modify notification behavior:
+- **Edit** `src/serviceWorker.ts`
+- **Restart** `npm run dev` (automatic rebuild)
+- **Test** via Settings → Test
 
-Les changements sont automatiquement pris en compte ! 🔄
+Changes are automatically taken into account! 🔄

@@ -317,7 +317,7 @@ watch(() => props.domainName, () => {
                 [getBadgeClasses('warning')]: isExpirationSoon && !isExpired
               }
             ]"
-            :title="`Configurer une alerte d'expiration pour ${domain.name}`">
+            :title="`Configure expiration alert for ${domain.name}`">
             exp. {{ formattedExpirationDate }}
             <span v-if="existingAlert" class="ml-1">🔔</span>
           </button>
@@ -366,7 +366,7 @@ watch(() => props.domainName, () => {
 
     <!-- Alert Modal -->
     <BaseModal v-model="showAlertModal">
-      <template v-slot:header>Alerte d'expiration</template>
+      <template v-slot:header>Expiration Alert</template>
       <template v-slot:body>
         <AlertForm 
           v-if="expirationDate"

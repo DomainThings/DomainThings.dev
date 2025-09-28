@@ -115,10 +115,10 @@ export const extractRegistrar = (rdapResponse: RdapResponse): string | undefined
 /**
  * Formats a date for display in a compact format
  * @param date - Date to format
- * @param locale - Locale for formatting (default: 'fr-FR')
+ * @param locale - Locale for formatting (default: 'en-US')
  * @returns Formatted date string
  */
-export const formatCompactDate = (date: Date, locale: string = 'fr-FR'): string => {
+export const formatCompactDate = (date: Date, locale: string = 'en-US'): string => {
   return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: '2-digit',

@@ -150,7 +150,7 @@ const ALERT_SERVICE_CONFIG = Object.freeze({
   legacyStorageKey: 'domain-alerts'
 } as const);
 
-// ===== Utilitaires privés =====
+// ===== Private utilities =====
 
 /**
  * Check if Service Worker is available

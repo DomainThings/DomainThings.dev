@@ -3,7 +3,7 @@
  */
 import { ref, onMounted, onUnmounted, readonly, type Ref } from 'vue';
 
-// ===== Types et Interfaces =====
+// ===== Types and Interfaces =====
 
 /**
  * Status enumeration for Service Worker states
@@ -105,7 +105,7 @@ export interface UseServiceWorkerReturn {
   readonly cleanup: () => void;
 }
 
-// ===== Utilitaires privés =====
+// ===== Private utilities =====
 
 /**
  * Check if Service Worker is supported in the current environment
@@ -128,7 +128,7 @@ const getActiveServiceWorker = (registration: ServiceWorkerRegistration): Servic
   return registration.active || registration.waiting || registration.installing || null;
 };
 
-// ===== Composable principal =====
+// ===== Main Composable =====
 
 /**
  * Vue 3 composable for managing Service Worker communications
@@ -148,16 +148,16 @@ const getActiveServiceWorker = (registration: ServiceWorkerRegistration): Servic
  * @throws {ServiceWorkerError} When Service Worker operations fail
  */
 export function useServiceWorker(): UseServiceWorkerReturn {
-  // ===== État réactif =====
+  // ===== Reactive state =====
   const isServiceWorkerReady = ref<boolean>(false);
   const serviceWorkerStatus = ref<ServiceWorkerStatus>(ServiceWorkerStatus.INITIALIZING);
 
-  // ===== Gestionnaires d'événements =====
+  // ===== Event handlers =====
   let messageHandler: ((event: MessageEvent<ServiceWorkerMessage>) => void) | null = null;
   let controllerChangeHandler: (() => void) | null = null;
   let errorHandler: ((event: Event) => void) | null = null;
 
-  // ===== Méthodes privées =====
+  // ===== Private methods =====
 
   /**
    * Handle messages from Service Worker
@@ -493,14 +493,12 @@ export function useServiceWorker(): UseServiceWorkerReturn {
     cleanup();
   });
 
-  // ===== API publique =====
-
   return {
-    // État réactif en lecture seule
+    // Read-only reactive state
     isServiceWorkerReady: readonly(isServiceWorkerReady),
     serviceWorkerStatus: readonly(serviceWorkerStatus),
     
-    // Méthodes
+    // Methods
     sendMessageToSW,
     testNotification,
     requestNotificationPermission,
