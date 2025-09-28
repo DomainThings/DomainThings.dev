@@ -6,7 +6,7 @@ import { Domain, type DomainData } from '@/types';
  */
 const DB_CONFIG = Object.freeze({
   name: 'domaincheck-db',
-  version: 6,
+  version: 7,
   stores: {
     domains: 'domains',
     tlds: 'tlds', 
@@ -56,7 +56,6 @@ interface SettingsRecord {
 interface AlertRecord {
   readonly id: string;
   readonly domain: string;
-  readonly enabled: boolean;
   readonly alertDate: string; // ISO string
   readonly reminderFrequency: 'once' | 'daily' | 'weekly';
   readonly expirationDate: string; // ISO string
@@ -137,8 +136,19 @@ export const getDb = async (): Promise<IDBPDatabase> => {
           keyPath: 'id' 
         });
         alertsStore.createIndex('domain', 'domain', { unique: false });
-        alertsStore.createIndex('enabled', 'enabled');
         alertsStore.createIndex('expirationDate', 'expirationDate');
+      }
+      
+      // Migration for version 7: Remove 'enabled' field from alerts
+      if (oldVersion < 7 && db.objectStoreNames.contains(DB_CONFIG.stores.alerts)) {
+        const alertsStore = transaction.objectStore(DB_CONFIG.stores.alerts);
+        
+        // Remove old 'enabled' index if it exists
+        if (alertsStore.indexNames.contains('enabled')) {
+          alertsStore.deleteIndex('enabled');
+        }
+        
+        console.log('Removed enabled index from alerts store in database migration to version 7');
       }
     },
     blocked() {
@@ -512,25 +522,7 @@ export const getAllAlerts = async (
   }
 };
 
-/**
- * Gets enabled alerts from the database
- * @returns Promise resolving to enabled alerts
- */
-export const getEnabledAlerts = async (): Promise<DbResult<AlertRecord[]>> => {
-  try {
-    const db = await getDb();
-    const tx = db.transaction(DB_CONFIG.stores.alerts, 'readonly');
-    const store = tx.objectStore(DB_CONFIG.stores.alerts);
-    const index = store.index('enabled');
-    
-    const records = await index.getAll(IDBKeyRange.only(true));
-    await tx.done;
-    
-    return { success: true, data: records };
-  } catch (error) {
-    return handleDbError('get enabled alerts', error);
-  }
-};
+
 
 /**
  * Removes an alert from the database by ID

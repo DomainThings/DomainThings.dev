@@ -24,8 +24,6 @@ const emit = defineEmits<Emits>();
 const { getButtonClasses, getBadgeClasses, getTextClasses } = useTheme();
 const { supportInfo, recommendations, checkBackgroundSupport } = useBackgroundNotifications();
 
-// Form state
-const enabled = ref(props.existingAlert?.enabled ?? true);
 
 // Calculate default alert date (expiration date or existing alert date)
 const getDefaultAlertDate = (): string => {
@@ -71,7 +69,6 @@ const daysBeforeExpiration = computed(() => {
 // Methods
 const handleSave = () => {
   const alertSettings = {
-    enabled: enabled.value,
     alertDate: new Date(alertDate.value),
     reminderFrequency: 'once' as const,
     domain: props.domain,
@@ -179,19 +176,7 @@ onMounted(() => {
 
     <!-- Form -->
     <form @submit.prevent="handleSave" class="space-y-4">
-      <!-- Enable/Disable Toggle -->
-      <div class="flex items-center justify-between">
-        <label :class="[getTextClasses('neutral'), 'font-medium']" for="alert-enabled">
-          Enable Alert
-        </label>
-        <input 
-          id="alert-enabled"
-          v-model="enabled"
-          type="checkbox"
-          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-      </div>
-
-      <div v-if="enabled" class="space-y-4">
+      <div class="space-y-4">
         <!-- Alert Date Selection -->
         <div>
           <label :class="[getTextClasses('neutral'), 'block text-sm font-medium mb-2']" for="alert-date">

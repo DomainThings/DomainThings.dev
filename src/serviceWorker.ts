@@ -58,7 +58,6 @@ type ReminderFrequency = 'once' | 'daily' | 'weekly';
 interface AlertSettings {
   readonly id: string;
   readonly domain: string;
-  readonly enabled: boolean;
   readonly alertDate: string; // ISO string in Service Worker
   readonly reminderFrequency: ReminderFrequency;
   readonly expirationDate: string; // ISO string in Service Worker
@@ -66,19 +65,7 @@ interface AlertSettings {
   readonly lastNotified?: string;
 }
 
-/**
- * Alert settings structure in Service Worker context
- */
-interface AlertSettings {
-  readonly id: string;
-  readonly domain: string;
-  readonly enabled: boolean;
-  readonly daysBeforeExpiration: number;
-  readonly reminderFrequency: ReminderFrequency;
-  readonly expirationDate: string; // ISO string in Service Worker
-  readonly createdAt: string;
-  readonly lastNotified?: string;
-}
+
 
 /**
  * Service Worker message types
@@ -453,10 +440,6 @@ const syncAlertsToIndexedDB = async (alerts: readonly AlertSettings[]): Promise<
  * Determine if a notification should be sent for an alert
  */
 const shouldSendNotification = (alert: AlertSettings, now: Date): boolean => {
-  if (!alert.enabled) {
-    return false;
-  }
-  
   try {
     const alertDate = new Date(alert.alertDate);
     

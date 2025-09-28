@@ -50,10 +50,6 @@ const getDaysUntilAlert = (alertDate: Date): number => {
 const getAlertStatus = (alert: AlertService.AlertSettings) => {
   const daysUntil = getDaysUntilAlert(alert.alertDate);
   
-  if (!alert.enabled) {
-    return { text: 'Disabled', variant: 'neutral' as const };
-  }
-  
   if (daysUntil < 0) {
     return { text: 'Past due', variant: 'error' as const };
   } else if (daysUntil === 0) {
@@ -100,8 +96,7 @@ const handleDeleteAlert = (alertId: string) => {
         <!-- Alert Info -->
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
-            <BellIcon v-if="alert.enabled" :class="[getIconClasses('primary'), 'w-5 h-5']" />
-            <BellOutlineIcon v-else :class="[getIconClasses('neutral'), 'w-5 h-5 opacity-50']" />
+            <BellIcon :class="[getIconClasses('primary'), 'w-5 h-5']" />
           </div>
           
           <div class="flex-1 min-w-0">

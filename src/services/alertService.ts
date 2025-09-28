@@ -14,7 +14,6 @@
  * // Create an alert
  * const alert = await alertService.saveAlert({
  *   domain: 'example.com',
- *   enabled: true,
  *   alertDate: new Date('2025-12-01'),
  *   reminderFrequency: 'weekly',
  *   expirationDate: new Date('2025-12-31')
@@ -44,7 +43,6 @@ export type NotificationPermissionStatus = 'granted' | 'denied' | 'default';
 export interface AlertSettings {
   readonly id: string;
   readonly domain: string;
-  readonly enabled: boolean;
   readonly alertDate: Date;
   readonly reminderFrequency: ReminderFrequency;
   readonly expirationDate: Date;
@@ -195,12 +193,7 @@ const validateAlertInput = (input: CreateAlertInput): void => {
     );
   }
 
-  if (typeof input.enabled !== 'boolean') {
-    throw new AlertServiceError(
-      'Alert enabled flag must be a boolean',
-      AlertServiceErrorCode.INVALID_INPUT
-    );
-  }
+
 
   if (!(input.alertDate instanceof Date) || isNaN(input.alertDate.getTime())) {
     throw new AlertServiceError(
@@ -448,7 +441,6 @@ class AlertService {
    * ```typescript
    * const alert = await alertService.saveAlert({
    *   domain: 'example.com',
-   *   enabled: true,
    *   alertDate: new Date('2025-12-01'),
    *   reminderFrequency: 'weekly',
    *   expirationDate: new Date('2025-12-31')
@@ -476,7 +468,6 @@ class AlertService {
       const alertRecord: db.AlertRecord = {
         id: alert.id,
         domain: alert.domain,
-        enabled: alert.enabled,
         alertDate: alert.alertDate.toISOString(),
         reminderFrequency: alert.reminderFrequency,
         expirationDate: alert.expirationDate.toISOString(),
@@ -845,10 +836,12 @@ class AlertService {
    * Convert database record to AlertSettings
    */
   private convertDbRecordToAlert(record: db.AlertRecord): AlertSettings {
+    // Handle legacy records that might still have 'enabled' field
+    const legacyRecord = record as any;
+    
     return {
       id: record.id,
       domain: record.domain,
-      enabled: record.enabled,
       alertDate: new Date(record.alertDate),
       reminderFrequency: record.reminderFrequency,
       expirationDate: new Date(record.expirationDate),
