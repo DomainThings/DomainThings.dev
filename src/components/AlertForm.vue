@@ -57,16 +57,6 @@ const formattedExpirationDate = computed(() => {
   });
 });
 
-// Computed for days before expiration based on selected alert date
-const daysBeforeExpiration = computed(() => {
-  const selectedDate = new Date(alertDate.value);
-  const expirationDateTime = new Date(props.expirationDate);
-  const diffTime = expirationDateTime.getTime() - selectedDate.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  return Math.max(0, diffDays);
-});
-
 // Methods
 const handleSave = () => {
   const alertSettings = {
@@ -220,11 +210,6 @@ onMounted(() => {
             v-model="alertDate"
             type="date"
             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-          <p :class="[getTextClasses('neutral'), 'text-xs mt-1 opacity-75']">
-            <span v-if="daysBeforeExpiration === 0">Alert on expiration date</span>
-            <span v-else-if="daysBeforeExpiration === 1">Alert 1 day before expiration</span>
-            <span v-else>Alert {{ daysBeforeExpiration }} days before expiration</span>
-          </p>
         </div>
       </div>
     </form>
