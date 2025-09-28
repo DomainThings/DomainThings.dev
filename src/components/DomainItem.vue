@@ -215,9 +215,39 @@ const loadExistingAlerts = async (): Promise<void> => {
   }
 };
 
+const ensureDomainIsBookmarked = async (): Promise<void> => {
+  // If already bookmarked, nothing to do
+  if (isBookmarked.value) return;
+  
+  try {
+    const db = await getDb();
+    
+    // Create a domain object with current information
+    const domainToSave = domainInfo.value || domain.value;
+    const domainWithWatchList = domainToSave.with({ isInWatchList: true });
+    
+    await db.add('domains', domainWithWatchList.toJSON());
+    
+    // Update the bookmark status
+    isBookmarked.value = true;
+    
+    // Emit bookmark event to notify parent components
+    emit('bookmark');
+    
+    console.info(`Domain ${props.domainName} automatically added to watch list when creating alert`);
+  } catch (error) {
+    console.error('Error automatically bookmarking domain:', error);
+    // Don't throw - alert creation should succeed even if bookmarking fails
+  }
+};
+
 const handleSaveAlert = async (alertSettings: Omit<AlertService.AlertSettings, 'id' | 'createdAt'>): Promise<void> => {
   try {
     await AlertService.saveAlert(alertSettings);
+    
+    // Automatically bookmark the domain when creating an alert
+    await ensureDomainIsBookmarked();
+    
     await loadExistingAlerts(); // Reload all alerts
     showAlertForm.value = false;
     editingAlert.value = null;
@@ -408,6 +438,7 @@ watch(() => props.domainName, () => {
           :domain="domain.name"
           :expiration-date="expirationDate"
           :existing-alert="editingAlert"
+          :is-bookmarked="isBookmarked"
           @save="handleSaveAlert"
           @delete="handleDeleteAlertFromForm"
           @close="handleCloseAlertModal">
