@@ -364,14 +364,17 @@ async function sendPushNotification(record: NotificationRecord, env: Env): Promi
     );
 
     // Send push notification
+    // Note: For proper Web Push, payload should be encrypted with AES-GCM
+    // This is a simplified version for demonstration
     const response = await fetch(record.pushSubscription.endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Encoding': 'aes128gcm',
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': '0',
         ...vapidHeaders
       },
-      body: JSON.stringify(payload)
+      // Send empty body for now - browsers will show a generic notification
+      body: null
     });
 
     if (!response.ok) {
@@ -386,6 +389,9 @@ async function sendPushNotification(record: NotificationRecord, env: Env): Promi
 
 /**
  * Generate VAPID headers for Web Push
+ * 
+ * Note: This is a simplified implementation for demonstration.
+ * In production, use a proper JWT library with proper VAPID signing.
  */
 async function generateVAPIDHeaders(
   endpoint: string,
@@ -393,14 +399,23 @@ async function generateVAPIDHeaders(
   publicKey: string,
   email: string
 ): Promise<Record<string, string>> {
-  // This is a simplified implementation
-  // In production, you'd want to use a proper JWT library
-  
-  const urlBase = new URL(endpoint).origin;
-  
-  return {
-    'Authorization': `vapid t=${privateKey}, k=${publicKey}`,
-    'Crypto-Key': `p256ecdsa=${publicKey}`,
-    'TTL': '86400' // 24 hours
-  };
+  try {
+    const urlBase = new URL(endpoint).origin;
+    
+    // For now, return basic headers
+    // TODO: Implement proper VAPID JWT signing
+    return {
+      'Authorization': `WebPush ${privateKey}`,
+      'Crypto-Key': `p256ecdsa=${publicKey}`,
+      'TTL': '86400' // 24 hours
+    };
+    
+  } catch (error) {
+    console.error('VAPID header generation failed:', error);
+    
+    // Fallback headers
+    return {
+      'TTL': '86400'
+    };
+  }
 }
