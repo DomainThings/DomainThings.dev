@@ -1,0 +1,20 @@
+name = "domaincheck-notifications"
+main = "src/index.ts"
+compatibility_date = "2024-10-01"
+
+# Cron schedule - Check every 6 hours
+[triggers]
+crons = ["0 */6 * * *"]
+
+# KV namespace for storing notifications
+[[kv_namespaces]]
+binding = "NOTIFICATIONS_KV"
+id = "your-kv-namespace-id"
+
+# Environment variables (set via wrangler secret)
+[vars]
+VAPID_PUBLIC_KEY = "YOUR_VAPID_PUBLIC_KEY"
+CONTACT_EMAIL = "your-email@domain.com"
+
+# Secrets (set via: wrangler secret put VAPID_PRIVATE_KEY)
+# VAPID_PRIVATE_KEY = "your-vapid-private-key"

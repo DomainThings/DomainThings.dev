@@ -1,0 +1,16 @@
+{
+  "name": "domaincheck-notifications-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for DomainCheck push notifications",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler build"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231025.0",
+    "wrangler": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}
