@@ -4,6 +4,7 @@
  * Provides comprehensive domain expiration alert management with:
  * - Database persistence
  * - Service Worker integration for background notifications
+ * - Cloudflare Worker push notifications for cross-platform support
  * - Permission management
  * - Legacy data migration
  * 
@@ -24,6 +25,11 @@
  * ```
  */
 import * as db from './dbService';
+import { 
+  createCloudflareNotificationService, 
+  type CloudflareNotificationService,
+  defaultCloudflareConfig 
+} from './cloudflareNotificationService';
 
 // ===== Types et Interfaces =====
 
@@ -100,12 +106,22 @@ export interface AlertServiceWorkerMessage {
 }
 
 /**
+ * Alert service configuration with Cloudflare integration
+ */
+export interface AlertServiceConfig {
+  readonly enableCloudflareNotifications: boolean;
+  readonly cloudflareWorkerUrl?: string;
+  readonly vapidPublicKey?: string;
+}
+
+/**
  * Notification support check result
  */
 export interface NotificationSupportResult {
   readonly supported: boolean;
   readonly permission: NotificationPermissionStatus;
   readonly serviceWorkerAvailable: boolean;
+  readonly cloudflareNotificationsSupported: boolean;
 }
 
 /**
@@ -242,21 +258,24 @@ class AlertService {
   private static instance: AlertService | null = null;
   private readonly alerts: Map<string, AlertSettings> = new Map();
   private serviceWorker: ServiceWorker | null = null;
+  private cloudflareService: CloudflareNotificationService | null = null;
+  private config: AlertServiceConfig;
   private isInitialized: boolean = false;
   private initializationPromise: Promise<void> | null = null;
 
-  private constructor() {
-    // Private constructor for singleton pattern
+  private constructor(config: AlertServiceConfig = { enableCloudflareNotifications: false }) {
+    this.config = config;
   }
 
   /**
    * Get the singleton instance of AlertService
    * 
+   * @param config - Optional configuration for Cloudflare notifications
    * @returns The AlertService instance
    */
-  static getInstance(): AlertService {
+  static getInstance(config?: AlertServiceConfig): AlertService {
     if (!AlertService.instance) {
-      AlertService.instance = new AlertService();
+      AlertService.instance = new AlertService(config);
     }
     return AlertService.instance;
   }
@@ -291,6 +310,9 @@ class AlertService {
     try {
       // Initialize Service Worker first
       await this.initializeServiceWorker();
+      
+      // Initialize Cloudflare service if enabled
+      await this.initializeCloudflareService();
       
       // Then load alerts from database
       await this.loadAlertsFromDatabase();
@@ -361,6 +383,41 @@ class AlertService {
   }
 
   /**
+   * Initialize Cloudflare notification service
+   */
+  private async initializeCloudflareService(): Promise<void> {
+    if (!this.config.enableCloudflareNotifications) {
+      console.info('Cloudflare notifications disabled in configuration');
+      return;
+    }
+
+    try {
+      const cloudflareConfig = {
+        workerUrl: this.config.cloudflareWorkerUrl || defaultCloudflareConfig.workerUrl,
+        vapidPublicKey: this.config.vapidPublicKey || defaultCloudflareConfig.vapidPublicKey
+      };
+
+      this.cloudflareService = createCloudflareNotificationService(cloudflareConfig);
+      
+      // Initialize push subscription if supported
+      if (this.cloudflareService.isPushNotificationSupported()) {
+        const result = await this.cloudflareService.initializePushSubscription();
+        if (result.success) {
+          console.info('Cloudflare push notifications initialized successfully');
+        } else {
+          console.warn('Failed to initialize Cloudflare push subscription:', result.error);
+        }
+      } else {
+        console.warn('Push notifications not supported in this environment');
+      }
+      
+    } catch (error) {
+      console.error('Failed to initialize Cloudflare service:', error);
+      // Don't throw here, service can work without Cloudflare
+    }
+  }
+
+  /**
    * Check notification support and permissions
    * 
    * @returns Comprehensive support information
@@ -377,11 +434,13 @@ class AlertService {
     const supported = isNotificationAPISupported();
     const permission: NotificationPermissionStatus = supported ? Notification.permission : 'denied';
     const serviceWorkerAvailable = this.serviceWorker !== null;
+    const cloudflareNotificationsSupported = this.cloudflareService?.isPushNotificationSupported() ?? false;
 
     return {
       supported,
       permission,
-      serviceWorkerAvailable
+      serviceWorkerAvailable,
+      cloudflareNotificationsSupported
     };
   }
 
@@ -489,6 +548,9 @@ class AlertService {
       // Sync with Service Worker
       await this.syncAlertsToServiceWorker();
       
+      // Schedule Cloudflare notification if enabled
+      await this.scheduleCloudflareNotification(alert);
+      
       console.info('Alert saved successfully:', alert.domain);
       return alert;
       
@@ -505,6 +567,58 @@ class AlertService {
       
       console.error('Save alert failed:', alertError);
       throw alertError;
+    }
+  }
+
+  /**
+   * Schedule Cloudflare notification for an alert
+   */
+  private async scheduleCloudflareNotification(alert: AlertSettings): Promise<void> {
+    if (!this.cloudflareService || !this.config.enableCloudflareNotifications) {
+      console.debug('Cloudflare notifications not available, skipping');
+      return;
+    }
+
+    try {
+      const result = await this.cloudflareService.scheduleNotification(
+        alert.domain,
+        alert.alertDate,
+        alert.expirationDate
+      );
+
+      if (result.success) {
+        console.info(`Cloudflare notification scheduled for domain: ${alert.domain}`);
+      } else {
+        console.warn(`Failed to schedule Cloudflare notification for ${alert.domain}:`, result.error);
+      }
+
+    } catch (error) {
+      console.error(`Error scheduling Cloudflare notification for ${alert.domain}:`, error);
+      // Don't throw here, local alerts should still work
+    }
+  }
+
+  /**
+   * Cancel Cloudflare notification for a domain
+   */
+  private async cancelCloudflareNotification(domain: string): Promise<void> {
+    if (!this.cloudflareService || !this.config.enableCloudflareNotifications) {
+      console.debug('Cloudflare notifications not available, skipping cancellation');
+      return;
+    }
+
+    try {
+      const result = await this.cloudflareService.cancelNotification(domain);
+
+      if (result.success) {
+        console.info(`Cloudflare notification cancelled for domain: ${domain}`);
+      } else {
+        console.warn(`Failed to cancel Cloudflare notification for ${domain}:`, result.error);
+      }
+
+    } catch (error) {
+      console.error(`Error cancelling Cloudflare notification for ${domain}:`, error);
+      // Don't throw here, local removal should still work
     }
   }
 
@@ -531,11 +645,20 @@ class AlertService {
     }
 
     try {
+      // Get alert info before deletion for Cloudflare cancellation
+      const alert = this.alerts.get(alertId);
+      
       const result = await db.removeAlert(alertId);
       
       if (result.success && result.data) {
         this.alerts.delete(alertId);
         await this.syncAlertsToServiceWorker();
+        
+        // Cancel Cloudflare notification if alert existed
+        if (alert) {
+          await this.cancelCloudflareNotification(alert.domain);
+        }
+        
         console.info('Alert removed successfully:', alertId);
         return true;
       }
@@ -588,6 +711,10 @@ class AlertService {
         }
         
         await this.syncAlertsToServiceWorker();
+        
+        // Cancel Cloudflare notification for this domain
+        await this.cancelCloudflareNotification(domain);
+        
         console.info('Domain alerts removed successfully:', domain);
         return true;
       }
@@ -883,8 +1010,28 @@ class AlertService {
  * 
  * Use this instance for all alert management operations.
  * The service will automatically initialize on first use.
+ * For Cloudflare notifications, use createAlertServiceWithCloudflare() instead.
  */
 export const alertService = AlertService.getInstance();
+
+/**
+ * Create AlertService instance with Cloudflare notifications enabled
+ * 
+ * @param config - Cloudflare configuration
+ * @returns AlertService instance with Cloudflare support
+ * 
+ * @example
+ * ```typescript
+ * const alertService = createAlertServiceWithCloudflare({
+ *   enableCloudflareNotifications: true,
+ *   cloudflareWorkerUrl: 'https://notifications.your-domain.workers.dev',
+ *   vapidPublicKey: 'YOUR_VAPID_PUBLIC_KEY'
+ * });
+ * ```
+ */
+export const createAlertServiceWithCloudflare = (config: AlertServiceConfig): AlertService => {
+  return AlertService.getInstance(config);
+};
 
 // ===== Convenience Functions =====
 
