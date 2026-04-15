@@ -16,6 +16,9 @@ on:
   schedule:
     - cron: '0 8 * * *'  # Every day at 8 AM UTC
 
+permissions:
+  contents: read
+
 jobs:
   # Build and type check - REQUIRED for PR protection
   build-and-type-check:
